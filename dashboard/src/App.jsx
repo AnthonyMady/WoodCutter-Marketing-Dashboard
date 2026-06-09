@@ -47,10 +47,10 @@ export default function App() {
     check();
   }, []);
 
-  const handleToken = useCallback(async () => {
+  const handleToken = useCallback(() => {
     setAuthed(true);
-    const email = await getUserEmail();
-    setUserEmail(email);
+    // Email comes from the ID token decoded in google.js — give it a moment to populate
+    setTimeout(() => setUserEmail(getUserEmail()), 500);
     load();
   }, [load]);
   useEffect(() => { if (gsiReady) initTokenClient(handleToken); }, [gsiReady, handleToken]);

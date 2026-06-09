@@ -1,12 +1,35 @@
 export const CLIENT_ID      = (import.meta.env.VITE_GOOGLE_CLIENT_ID  ?? "").trim();
 export const SPREADSHEET_ID = (import.meta.env.VITE_SPREADSHEET_ID ?? "").trim().replace(/\/+$/, "");
 
-const SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly email";
+const SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly";
 
 let _tokenClient = null;
 let _accessToken = null;
 
+let _email = null;
+
+/** Decode the email from a Google ID token JWT (no extra scope needed). */
+function decodeEmail(credential) {
+  try {
+    const payload = JSON.parse(atob(credential.split(".")[1]));
+    return payload.email?.toLowerCase() ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function initTokenClient(onTokenReceived) {
+  // Use the credential (ID token) flow to get the email silently — no sensitive scope needed
+  window.google.accounts.id.initialize({
+    client_id: CLIENT_ID,
+    callback: (credResp) => {
+      _email = decodeEmail(credResp.credential);
+    },
+    auto_select: true,
+  });
+  window.google.accounts.id.prompt();
+
+  // Separate token client for Sheets API access
   _tokenClient = window.google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
@@ -20,7 +43,12 @@ export function initTokenClient(onTokenReceived) {
 
 export function requestAccessToken() {
   if (!_tokenClient) throw new Error("Token client not initialised");
-  _tokenClient.requestAccessToken({ prompt: "consent" });
+  // Empty prompt = only asks if not already authorized (no re-consent every time)
+  _tokenClient.requestAccessToken({ prompt: "" });
+}
+
+export function getUserEmail() {
+  return _email;
 }
 
 export function signOut() {
