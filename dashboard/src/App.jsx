@@ -8,13 +8,12 @@ const SHOOTERS_ALLOWED = [
 ];
 import {
   filterByDate, filterByVenue, filterBrandCampaigns, aggregateByDate, aggregateByCampaign,
-  aggregateByCountry, computeKpis, getDateRange, getBrandOnlySpend,
+  aggregateByCountry, computeKpis, getDateRange,
 } from "./lib/data.js";
 import { useSheets } from "./hooks/useSheets.js";
 import KpiCard           from "./components/KpiCard.jsx";
 import DateFilter        from "./components/DateFilter.jsx";
 import VenueFilter       from "./components/VenueFilter.jsx";
-import BrandCallout      from "./components/BrandCallout.jsx";
 import SpendChart        from "./components/SpendChart.jsx";
 import TopCampaignsChart from "./components/TopCampaignsChart.jsx";
 import CountryBreakdown  from "./components/CountryBreakdown.jsx";
@@ -67,7 +66,6 @@ export default function App() {
   const { start, end } = data ? getDateRange(preset, data.googleAds) : {};
   const byDate_all = data ? filterByDate(data.googleAds, start, end) : [];
   const filtered   = filterByVenue(byDate_all, venue);
-  const brandSpend = (venue !== "All venues" && venue !== "Shooters Brussels") ? getBrandOnlySpend(byDate_all) : 0;
   const kpis       = computeKpis(filtered);
   const byDate     = aggregateByDate(filtered);
   const campaigns  = aggregateByCampaign(filtered);
@@ -190,7 +188,6 @@ export default function App() {
             {view === "campaigns" && (
               <>
                 <VenueFilter value={venue} onChange={handleVenueChange} canSeeShooters={canSeeShooters} />
-                <BrandCallout spend={brandSpend} venue={venue} />
                 <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
                   <KpiCard label="Total Spend"  value={money(kpis.spend)} />
                   <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} sub={`€${kpis.cpc.toFixed(2)} CPC`} />
@@ -233,7 +230,6 @@ export default function App() {
             {view === "venues" && (
               <>
                 <VenueFilter value={venue} onChange={handleVenueChange} canSeeShooters={canSeeShooters} />
-                <BrandCallout spend={brandSpend} venue={venue} />
                 <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
                   <KpiCard label="Total Spend"  value={money(kpis.spend)} sub={venue} />
                   <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
