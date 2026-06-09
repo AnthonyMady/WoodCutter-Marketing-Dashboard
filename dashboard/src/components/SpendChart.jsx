@@ -1,54 +1,42 @@
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 
-/**
- * Props:
- *   googleAds  – array of Google Ads row objects
- *   metaAds    – array of Meta Ads row objects
- */
-export default function SpendChart({ googleAds, metaAds }) {
-  // Build a unified date-keyed map
-  const byDate = {};
+const fmt = (v) => `€${Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
-  for (const row of googleAds) {
-    const d = row.Date;
-    if (!d) continue;
-    byDate[d] = byDate[d] ?? { date: d };
-    byDate[d].google = (byDate[d].google ?? 0) + parseFloat(row.Cost || 0);
-  }
-
-  for (const row of metaAds) {
-    const d = row.date_start;
-    if (!d) continue;
-    byDate[d] = byDate[d] ?? { date: d };
-    byDate[d].meta = (byDate[d].meta ?? 0) + parseFloat(row.spend || 0);
-  }
-
-  const chartData = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
-
+export default function SpendChart({ data }) {
   return (
-    <div style={{ background: "#1e2130", borderRadius: 12, padding: "24px 20px" }}>
-      <h3 style={{ color: "#94a3b8", fontSize: 13, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-        Daily Spend
-      </h3>
-      <ResponsiveContainer width="100%" height={260}>
-        <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#2d3348" />
-          <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 11 }} tickLine={false} />
-          <YAxis tick={{ fill: "#64748b", fontSize: 11 }} tickLine={false} axisLine={false}
-            tickFormatter={(v) => `$${v.toLocaleString()}`} />
+    <div style={{ background: "#1a1d2e", borderRadius: 12, padding: "24px 20px" }}>
+      <h3 style={titleStyle}>Daily Spend & Conversions</h3>
+      <ResponsiveContainer width="100%" height={280}>
+        <ComposedChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#22263a" />
+          <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 11 }} tickLine={false}
+            tickFormatter={(d) => d.slice(5)} />
+          <YAxis yAxisId="spend" tick={{ fill: "#64748b", fontSize: 11 }} tickLine={false}
+            axisLine={false} tickFormatter={fmt} />
+          <YAxis yAxisId="conv" orientation="right" tick={{ fill: "#64748b", fontSize: 11 }}
+            tickLine={false} axisLine={false} />
           <Tooltip
-            contentStyle={{ background: "#0f1117", border: "1px solid #2d3348", borderRadius: 8 }}
-            labelStyle={{ color: "#94a3b8" }}
-            formatter={(v, name) => [`$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 })}`, name]}
+            contentStyle={{ background: "#0f1117", border: "1px solid #2d3348", borderRadius: 8, fontSize: 13 }}
+            labelStyle={{ color: "#94a3b8", marginBottom: 4 }}
+            formatter={(v, name) => {
+              if (name === "Spend") return [fmt(v), name];
+              return [Number(v).toLocaleString(undefined, { maximumFractionDigits: 1 }), name];
+            }}
           />
           <Legend wrapperStyle={{ color: "#94a3b8", fontSize: 12 }} />
-          <Line type="monotone" dataKey="google" name="Google Ads" stroke="#4f8ef7" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="meta"   name="Meta Ads"   stroke="#e05fff" strokeWidth={2} dot={false} />
-        </LineChart>
+          <Bar yAxisId="spend" dataKey="spend" name="Spend" fill="#4f8ef7" opacity={0.85} radius={[3,3,0,0]} />
+          <Line yAxisId="conv" type="monotone" dataKey="conversions" name="Conversions"
+            stroke="#34d399" strokeWidth={2} dot={false} />
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );
 }
+
+const titleStyle = {
+  color: "#94a3b8", fontSize: 12, marginBottom: 16,
+  textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600,
+};

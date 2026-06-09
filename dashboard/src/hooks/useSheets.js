@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { fetchSheet, rowsToObjects } from "../lib/google.js";
 
 export function useSheets() {
-  const [data, setData]       = useState(null);   // { googleAds, metaAds, meta }
+  const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
 
@@ -10,15 +10,18 @@ export function useSheets() {
     setLoading(true);
     setError(null);
     try {
-      const [gRaw, mRaw, metaRaw] = await Promise.all([
+      const [gRaw, metaRaw] = await Promise.all([
         fetchSheet("google_ads"),
-        fetchSheet("meta_ads"),
         fetchSheet("meta"),
       ]);
+
+      // Filter out any rows where Date looks like a header
+      const rows = rowsToObjects(gRaw.headers, gRaw.rows)
+        .filter((r) => r.Date && r.Date !== "Date");
+
       setData({
-        googleAds: rowsToObjects(gRaw.headers, gRaw.rows),
-        metaAds:   rowsToObjects(mRaw.headers, mRaw.rows),
-        meta:      rowsToObjects(metaRaw.headers, metaRaw.rows)[0] ?? {},
+        googleAds: rows,
+        meta: rowsToObjects(metaRaw.headers, metaRaw.rows)[0] ?? {},
       });
     } catch (e) {
       setError(e.message);
