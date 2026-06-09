@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import { initTokenClient, requestAccessToken, signOut } from "./lib/google.js";
 import {
   filterByDate, filterByVenue, aggregateByDate, aggregateByCampaign,
-  aggregateByCountry, computeKpis, getDateRange,
+  aggregateByCountry, computeKpis, getDateRange, getBrandOnlySpend,
 } from "./lib/data.js";
 import { useSheets } from "./hooks/useSheets.js";
 import VenueFilter      from "./components/VenueFilter.jsx";
+import BrandCallout     from "./components/BrandCallout.jsx";
 import KpiCard          from "./components/KpiCard.jsx";
 import DateFilter       from "./components/DateFilter.jsx";
 import SpendChart       from "./components/SpendChart.jsx";
@@ -41,7 +42,9 @@ export default function App() {
 
   // Derived data
   const { start, end } = data ? getDateRange(preset, data.googleAds) : {};
-  const filtered   = data ? filterByVenue(filterByDate(data.googleAds, start, end), venue) : [];
+  const byDate_all  = data ? filterByDate(data.googleAds, start, end) : [];
+  const filtered    = filterByVenue(byDate_all, venue);
+  const brandSpend  = venue !== "All venues" ? getBrandOnlySpend(byDate_all) : 0;
   const kpis       = computeKpis(filtered);
   const byDate     = aggregateByDate(filtered);
   const campaigns  = aggregateByCampaign(filtered);
@@ -103,6 +106,9 @@ export default function App() {
 
           {/* Venue filter */}
           <VenueFilter value={venue} onChange={setVenue} />
+
+          {/* Brand spend callout */}
+          <BrandCallout spend={brandSpend} venue={venue} />
 
           {/* KPI Row */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>

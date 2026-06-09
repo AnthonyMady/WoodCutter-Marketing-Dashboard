@@ -17,7 +17,9 @@ export const VENUES = [
 ];
 
 const VENUE_PATTERNS = [
-  { pattern: /shooters/i,                          venue: "Shooters Brussels" },
+  // Shooters Brussels brand — all shooting bar / generic shooting campaigns
+  { pattern: /shooters|shooting.?bar|schietbar|exp.?rience.?tir|^brand_|^generic_/i, venue: "Shooters Brussels" },
+  // Venue-specific campaigns
   { pattern: /bruxelles|BEL.*french|french.*BEL/i, venue: "Brussels" },
   { pattern: /BEL.*dutch|dutch.*BEL/i,             venue: "Antwerp" },
   { pattern: /berlin/i,                             venue: "Berlin" },
@@ -32,7 +34,14 @@ export function parseVenue(name = "") {
   for (const { pattern, venue } of VENUE_PATTERNS) {
     if (pattern.test(name)) return venue;
   }
-  return null; // brand/generic campaigns not tied to one venue
+  return null; // country-wide brand campaigns — shown only under "All venues"
+}
+
+/** Returns spend of rows that have no venue (country-wide brand campaigns). */
+export function getBrandOnlySpend(rows) {
+  return rows
+    .filter((r) => parseVenue(r.CampaignName) === null)
+    .reduce((a, r) => a + num(r.Cost), 0);
 }
 
 const COUNTRY_PATTERNS = [
