@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { initTokenClient, requestAccessToken, signOut } from "./lib/google.js";
 import {
-  filterByDate, aggregateByDate, aggregateByCampaign,
+  filterByDate, filterByVenue, aggregateByDate, aggregateByCampaign,
   aggregateByCountry, computeKpis, getDateRange,
 } from "./lib/data.js";
 import { useSheets } from "./hooks/useSheets.js";
+import VenueFilter      from "./components/VenueFilter.jsx";
 import KpiCard          from "./components/KpiCard.jsx";
 import DateFilter       from "./components/DateFilter.jsx";
 import SpendChart       from "./components/SpendChart.jsx";
@@ -18,6 +19,7 @@ export default function App() {
   const [authed, setAuthed]     = useState(false);
   const [gsiReady, setGsiReady] = useState(false);
   const [preset, setPreset]     = useState("30d");
+  const [venue, setVenue]       = useState("All venues");
   const { data, loading, error, load } = useSheets();
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function App() {
 
   // Derived data
   const { start, end } = data ? getDateRange(preset, data.googleAds) : {};
-  const filtered   = data ? filterByDate(data.googleAds, start, end) : [];
+  const filtered   = data ? filterByVenue(filterByDate(data.googleAds, start, end), venue) : [];
   const kpis       = computeKpis(filtered);
   const byDate     = aggregateByDate(filtered);
   const campaigns  = aggregateByCampaign(filtered);
@@ -98,6 +100,9 @@ export default function App() {
 
       {authed && data && !loading && (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+          {/* Venue filter */}
+          <VenueFilter value={venue} onChange={setVenue} />
 
           {/* KPI Row */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>

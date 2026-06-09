@@ -3,6 +3,38 @@
  * All monetary values are in the account currency (EUR based on campaign names).
  */
 
+export const VENUES = [
+  "All venues",
+  "Brussels",
+  "Antwerp",
+  "Berlin",
+  "Frankfurt",
+  "Hamburg",
+  "Cologne",
+  "Bonn",
+  "Leipzig",
+  "Shooters Brussels",
+];
+
+const VENUE_PATTERNS = [
+  { pattern: /shooters/i,                          venue: "Shooters Brussels" },
+  { pattern: /bruxelles|BEL.*french|french.*BEL/i, venue: "Brussels" },
+  { pattern: /BEL.*dutch|dutch.*BEL/i,             venue: "Antwerp" },
+  { pattern: /berlin/i,                             venue: "Berlin" },
+  { pattern: /frankfurt/i,                          venue: "Frankfurt" },
+  { pattern: /hamburg/i,                            venue: "Hamburg" },
+  { pattern: /cologne/i,                            venue: "Cologne" },
+  { pattern: /\bbonn\b/i,                           venue: "Bonn" },
+  { pattern: /leipzig/i,                            venue: "Leipzig" },
+];
+
+export function parseVenue(name = "") {
+  for (const { pattern, venue } of VENUE_PATTERNS) {
+    if (pattern.test(name)) return venue;
+  }
+  return null; // brand/generic campaigns not tied to one venue
+}
+
 const COUNTRY_PATTERNS = [
   { pattern: /\bFR\b/,  label: "France" },
   { pattern: /\bNL\b/,  label: "Netherlands" },
@@ -34,6 +66,12 @@ export function parseCampaignType(name = "") {
 export function num(v) {
   const n = parseFloat(v);
   return isNaN(n) ? 0 : n;
+}
+
+/** Filter rows by venue. "All venues" returns everything. */
+export function filterByVenue(rows, venue) {
+  if (!venue || venue === "All venues") return rows;
+  return rows.filter((r) => parseVenue(r.CampaignName) === venue);
 }
 
 /** Filter rows by a date range. start/end are "YYYY-MM-DD" strings or null. */
@@ -72,6 +110,7 @@ export function aggregateByCampaign(rows) {
       campaign: name,
       country: parseCountry(name),
       type: parseCampaignType(name),
+      venue: parseVenue(name) ?? "Brand/Generic",
       spend: 0, clicks: 0, impressions: 0, conversions: 0, convValue: 0,
     };
     map[name].spend       += num(r.Cost);
