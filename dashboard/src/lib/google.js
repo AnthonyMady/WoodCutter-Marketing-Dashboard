@@ -19,17 +19,7 @@ function decodeEmail(credential) {
 }
 
 export function initTokenClient(onTokenReceived) {
-  // Use the credential (ID token) flow to get the email silently — no sensitive scope needed
-  window.google.accounts.id.initialize({
-    client_id: CLIENT_ID,
-    callback: (credResp) => {
-      _email = decodeEmail(credResp.credential);
-    },
-    auto_select: true,
-  });
-  window.google.accounts.id.prompt();
-
-  // Separate token client for Sheets API access
+  // Token client for Sheets API access
   _tokenClient = window.google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
@@ -39,11 +29,24 @@ export function initTokenClient(onTokenReceived) {
       onTokenReceived(resp.access_token);
     },
   });
+
+  // ID token flow — gets email and, if One Tap auto-selects, triggers silent token request
+  window.google.accounts.id.initialize({
+    client_id: CLIENT_ID,
+    callback: (credResp) => {
+      _email = decodeEmail(credResp.credential);
+      // Auto-selected = user already has active session → silently get Sheets token
+      if (credResp.select_by === "auto" || credResp.select_by === "user_1tap") {
+        _tokenClient.requestAccessToken({ prompt: "" });
+      }
+    },
+    auto_select: true,
+  });
+  window.google.accounts.id.prompt();
 }
 
 export function requestAccessToken() {
   if (!_tokenClient) throw new Error("Token client not initialised");
-  // Empty prompt = only asks if not already authorized (no re-consent every time)
   _tokenClient.requestAccessToken({ prompt: "" });
 }
 
@@ -56,16 +59,7 @@ export function signOut() {
     window.google.accounts.oauth2.revoke(_accessToken);
     _accessToken = null;
   }
-}
-
-export async function getUserEmail() {
-  if (!_accessToken) return null;
-  const resp = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-    headers: { Authorization: `Bearer ${_accessToken}` },
-  });
-  if (!resp.ok) return null;
-  const { email } = await resp.json();
-  return email?.toLowerCase() ?? null;
+  _email = null;
 }
 
 export async function fetchSheet(sheetName) {
