@@ -1,8 +1,8 @@
-export default function KpiCard({ label, value, sub, accent }) {
+export default function KpiCard({ label, value, sub }) {
   return (
     <div style={{
-      background: "#1a1d2e",
-      border: `1px solid ${accent ?? "#2d3348"}`,
+      background: "#fff",
+      border: "1px solid #e5e7eb",
       borderRadius: 12,
       padding: "20px 24px",
       display: "flex",
@@ -10,11 +10,13 @@ export default function KpiCard({ label, value, sub, accent }) {
       gap: 6,
       flex: "1 1 160px",
     }}>
-      <span style={{ fontSize: 11, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>
+      <span style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em" }}>
         {label}
       </span>
-      <span style={{ fontSize: 26, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.1 }}>{value}</span>
-      {sub && <span style={{ fontSize: 12, color: "#64748b" }}>{sub}</span>}
+      <span style={{ fontSize: 26, fontWeight: 700, color: "#111827", letterSpacing: "-0.5px", lineHeight: 1 }}>
+        {value}
+      </span>
+      {sub && <span style={{ fontSize: 12, color: "#9ca3af" }}>{sub}</span>}
     </div>
   );
 }

@@ -1,36 +1,40 @@
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
-const COLORS = ["#4f8ef7", "#34d399", "#f59e0b", "#e05fff", "#64748b"];
+const COLORS = ["#2563eb", "#16a34a", "#f59e0b", "#8b5cf6", "#9ca3af"];
 
 export default function CountryBreakdown({ countries }) {
-  const data = countries.map((c) => ({ name: c.country, value: c.spend }));
+  const data = countries.map((c) => ({ name: c.country, value: parseFloat(c.spend.toFixed(2)) }));
   const fmtEur = (v) => `€${Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
   return (
-    <div style={{ background: "#1a1d2e", borderRadius: 12, padding: "24px 20px" }}>
-      <h3 style={titleStyle}>Spend by Country</h3>
-      <ResponsiveContainer width="100%" height={240}>
+    <div style={card}>
+      <p style={title}>Spend by Country</p>
+      <p style={sub}>Current period breakdown</p>
+      <ResponsiveContainer width="100%" height={200}>
         <PieChart>
-          <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={90}
+          <Pie data={data} cx="50%" cy="50%" innerRadius={55} outerRadius={80}
             paddingAngle={3} dataKey="value">
             {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
           </Pie>
           <Tooltip
-            contentStyle={{ background: "#0f1117", border: "1px solid #2d3348", borderRadius: 8, fontSize: 13 }}
+            contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 13, boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)" }}
+            labelStyle={{ color: "#111827", fontWeight: 600 }}
+            itemStyle={{ color: "#374151" }}
             formatter={(v) => [fmtEur(v), "Spend"]}
           />
-          <Legend wrapperStyle={{ color: "#94a3b8", fontSize: 12 }} />
+          <Legend wrapperStyle={{ color: "#6b7280", fontSize: 12 }} iconType="circle" iconSize={8} />
         </PieChart>
       </ResponsiveContainer>
 
-      {/* Stats table below pie */}
-      <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8, borderTop: "1px solid #f3f4f6", paddingTop: 12 }}>
         {countries.map((c, i) => (
-          <div key={c.country} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-            <span style={{ color: COLORS[i % COLORS.length], fontWeight: 500 }}>{c.country}</span>
-            <span style={{ color: "#94a3b8" }}>{fmtEur(c.spend)}</span>
-            <span style={{ color: "#64748b" }}>ROAS {c.roas.toFixed(2)}x</span>
-            <span style={{ color: "#64748b" }}>{c.conversions.toFixed(0)} conv.</span>
+          <div key={c.country} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: COLORS[i % COLORS.length], flexShrink: 0 }} />
+              <span style={{ color: "#374151", fontWeight: 500 }}>{c.country}</span>
+            </div>
+            <span style={{ color: "#111827", fontWeight: 600 }}>{fmtEur(c.spend)}</span>
+            <span style={{ color: "#9ca3af" }}>ROAS {c.roas.toFixed(2)}x</span>
           </div>
         ))}
       </div>
@@ -38,7 +42,6 @@ export default function CountryBreakdown({ countries }) {
   );
 }
 
-const titleStyle = {
-  color: "#94a3b8", fontSize: 12, marginBottom: 16,
-  textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600,
-};
+const card  = { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "24px" };
+const title = { fontSize: 13, fontWeight: 600, color: "#374151" };
+const sub   = { fontSize: 12, color: "#9ca3af", marginTop: 2, marginBottom: 16 };

@@ -7,36 +7,42 @@ const fmt = (v) => `€${Number(v).toLocaleString(undefined, { maximumFractionDi
 
 export default function SpendChart({ data }) {
   return (
-    <div style={{ background: "#1a1d2e", borderRadius: 12, padding: "24px 20px" }}>
-      <h3 style={titleStyle}>Daily Spend & Conversions</h3>
-      <ResponsiveContainer width="100%" height={280}>
+    <div style={card}>
+      <div style={titleRow}>
+        <div>
+          <p style={title}>Daily Spend & Conversions</p>
+          <p style={sub}>Last period · Google Ads</p>
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height={260}>
         <ComposedChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#22263a" />
-          <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 11 }} tickLine={false}
+          <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+          <XAxis dataKey="date" tick={{ fill: "#9ca3af", fontSize: 11 }} tickLine={false}
             tickFormatter={(d) => d.slice(5)} />
-          <YAxis yAxisId="spend" tick={{ fill: "#64748b", fontSize: 11 }} tickLine={false}
+          <YAxis yAxisId="spend" tick={{ fill: "#9ca3af", fontSize: 11 }} tickLine={false}
             axisLine={false} tickFormatter={fmt} />
-          <YAxis yAxisId="conv" orientation="right" tick={{ fill: "#64748b", fontSize: 11 }}
+          <YAxis yAxisId="conv" orientation="right" tick={{ fill: "#9ca3af", fontSize: 11 }}
             tickLine={false} axisLine={false} />
           <Tooltip
-            contentStyle={{ background: "#0f1117", border: "1px solid #2d3348", borderRadius: 8, fontSize: 13 }}
-            labelStyle={{ color: "#94a3b8", marginBottom: 4 }}
+            contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 13, boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)" }}
+            labelStyle={{ color: "#111827", fontWeight: 600, marginBottom: 4 }}
+            itemStyle={{ color: "#374151" }}
             formatter={(v, name) => {
               if (name === "Spend") return [fmt(v), name];
               return [Number(v).toLocaleString(undefined, { maximumFractionDigits: 1 }), name];
             }}
           />
-          <Legend wrapperStyle={{ color: "#94a3b8", fontSize: 12 }} />
-          <Bar yAxisId="spend" dataKey="spend" name="Spend" fill="#4f8ef7" opacity={0.85} radius={[3,3,0,0]} />
+          <Legend wrapperStyle={{ color: "#6b7280", fontSize: 12 }} />
+          <Bar yAxisId="spend" dataKey="spend" name="Spend" fill="#2563eb22" stroke="#2563eb" strokeWidth={1} radius={[3,3,0,0]} />
           <Line yAxisId="conv" type="monotone" dataKey="conversions" name="Conversions"
-            stroke="#34d399" strokeWidth={2} dot={false} />
+            stroke="#16a34a" strokeWidth={2} dot={false} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
   );
 }
 
-const titleStyle = {
-  color: "#94a3b8", fontSize: 12, marginBottom: 16,
-  textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600,
-};
+const card = { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: "24px" };
+const titleRow = { marginBottom: 20 };
+const title = { fontSize: 13, fontWeight: 600, color: "#374151" };
+const sub   = { fontSize: 12, color: "#9ca3af", marginTop: 2 };

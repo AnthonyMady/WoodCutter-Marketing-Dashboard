@@ -4,22 +4,23 @@ export default function BrandCallout({ spend, venue }) {
 
   return (
     <div style={{
-      background: "#1a1d2e",
-      border: "1px solid #2d3348",
+      background: "#fffbeb",
+      border: "1px solid #fde68a",
       borderLeft: "3px solid #f59e0b",
       borderRadius: 10,
-      padding: "12px 16px",
+      padding: "11px 16px",
       fontSize: 13,
-      color: "#94a3b8",
+      color: "#92400e",
       display: "flex",
       alignItems: "center",
       gap: 10,
+      marginBottom: 20,
     }}>
-      <span style={{ fontSize: 16 }}>ℹ️</span>
+      <span>ℹ️</span>
       <span>
-        Showing <strong style={{ color: "#e2e8f0" }}>{venue}</strong>-specific campaigns only.{" "}
-        Country-wide brand campaigns ({fmt(spend)} spend) are excluded here —
-        select <strong style={{ color: "#e2e8f0" }}>All venues</strong> to include them.
+        Showing <strong>{venue}</strong>-specific campaigns only.{" "}
+        Country-wide brand campaigns ({fmt(spend)} spend) are excluded —
+        select <strong>All venues</strong> to include them.
       </span>
     </div>
   );
