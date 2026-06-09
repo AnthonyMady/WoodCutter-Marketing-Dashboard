@@ -68,24 +68,39 @@ export default function App() {
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {authed && data && <DateFilter value={preset} onChange={setPreset} />}
-          {authed ? (
-            <button onClick={handleSignOut} style={btn("#1a1d2e", "#64748b")}>Sign out</button>
-          ) : (
-            <button onClick={handleSignIn} disabled={!gsiReady} style={btn("#4f8ef7", "#fff")}>
-              {gsiReady ? "Sign in with Google" : "Loading…"}
-            </button>
-          )}
+          {authed && <button onClick={handleSignOut} style={btn("#1a1d2e", "#64748b")}>Sign out</button>}
         </div>
       </div>
 
       {/* Not signed in */}
       {!authed && (
-        <div style={{ textAlign: "center", marginTop: 120, color: "#475569" }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
-          <p style={{ fontSize: 20, fontWeight: 600, color: "#94a3b8", marginBottom: 8 }}>
-            Sign in to view your marketing data
+        <div style={{
+          position: "fixed", inset: 0,
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          background: "#0d0f1a", gap: 20,
+        }}>
+          <div style={{ fontSize: 56 }}>📊</div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>
+            Marketing Dashboard
+          </h2>
+          <p style={{ fontSize: 14, color: "#475569", margin: 0 }}>
+            Sign in to view your campaign performance
           </p>
-          <p style={{ fontSize: 14 }}>Access is limited to accounts with permission on the data sheet.</p>
+          <button
+            onClick={handleSignIn}
+            disabled={!gsiReady}
+            style={{
+              marginTop: 8,
+              background: "#4f8ef7", color: "#fff",
+              border: "none", borderRadius: 10,
+              padding: "14px 36px", fontSize: 16,
+              fontWeight: 600, cursor: "pointer",
+              opacity: gsiReady ? 1 : 0.5,
+            }}
+          >
+            {gsiReady ? "Sign in with Google" : "Loading…"}
+          </button>
         </div>
       )}
 
