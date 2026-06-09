@@ -30,6 +30,16 @@ export function signOut() {
   }
 }
 
+export async function getUserEmail() {
+  if (!_accessToken) return null;
+  const resp = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+    headers: { Authorization: `Bearer ${_accessToken}` },
+  });
+  if (!resp.ok) return null;
+  const { email } = await resp.json();
+  return email?.toLowerCase() ?? null;
+}
+
 export async function fetchSheet(sheetName) {
   if (!_accessToken) throw new Error("Not authenticated");
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}`;

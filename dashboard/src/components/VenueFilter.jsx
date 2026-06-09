@@ -13,14 +13,16 @@ const FLAG = {
   "All venues":        "🌍",
 };
 
-export default function VenueFilter({ value, onChange }) {
+export default function VenueFilter({ value, onChange, canSeeShooters = false }) {
+  const visible = VENUES.filter((v) => v !== "Shooters Brussels" || canSeeShooters);
+
   return (
     <div style={{ marginBottom: 24 }}>
       <p style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
         Filter by venue
       </p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        {VENUES.map((v) => {
+        {visible.map((v) => {
           const active = value === v;
           return (
             <button

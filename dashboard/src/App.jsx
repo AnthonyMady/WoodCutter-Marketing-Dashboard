@@ -1,5 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import { initTokenClient, requestAccessToken, signOut } from "./lib/google.js";
+import { initTokenClient, requestAccessToken, signOut, getUserEmail } from "./lib/google.js";
+
+const SHOOTERS_ALLOWED = [
+  "anthony.mady.work@gmail.com",
+  "romain2felix@gmail.com",
+  "julien.vandenitte.work@gmail.com",
+];
 import {
   filterByDate, filterByVenue, aggregateByDate, aggregateByCampaign,
   aggregateByCountry, computeKpis, getDateRange, getBrandOnlySpend,
@@ -28,7 +34,10 @@ export default function App() {
   const [preset, setPreset]     = useState("30d");
   const [venue, setVenue]       = useState("All venues");
   const [view, setView]         = useState("overview");
+  const [userEmail, setUserEmail] = useState(null);
   const { data, loading, error, load } = useSheets();
+
+  const canSeeShooters = SHOOTERS_ALLOWED.includes(userEmail);
 
   useEffect(() => {
     const check = () => {
@@ -38,11 +47,21 @@ export default function App() {
     check();
   }, []);
 
-  const handleToken = useCallback(() => { setAuthed(true); load(); }, [load]);
+  const handleToken = useCallback(async () => {
+    setAuthed(true);
+    const email = await getUserEmail();
+    setUserEmail(email);
+    load();
+  }, [load]);
   useEffect(() => { if (gsiReady) initTokenClient(handleToken); }, [gsiReady, handleToken]);
 
   const handleSignIn  = () => requestAccessToken();
-  const handleSignOut = () => { signOut(); setAuthed(false); };
+  const handleSignOut = () => { signOut(); setAuthed(false); setUserEmail(null); };
+
+  const handleVenueChange = (v) => {
+    if (v === "Shooters Brussels" && !canSeeShooters) return;
+    setVenue(v);
+  };
 
   const { start, end } = data ? getDateRange(preset, data.googleAds) : {};
   const byDate_all = data ? filterByDate(data.googleAds, start, end) : [];
@@ -168,7 +187,7 @@ export default function App() {
             {/* ── CAMPAIGNS ── */}
             {view === "campaigns" && (
               <>
-                <VenueFilter value={venue} onChange={setVenue} />
+                <VenueFilter value={venue} onChange={handleVenueChange} canSeeShooters={canSeeShooters} />
                 <BrandCallout spend={brandSpend} venue={venue} />
                 <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
                   <KpiCard label="Total Spend"  value={money(kpis.spend)} />
@@ -187,7 +206,7 @@ export default function App() {
             {/* ── VENUES ── */}
             {view === "venues" && (
               <>
-                <VenueFilter value={venue} onChange={setVenue} />
+                <VenueFilter value={venue} onChange={handleVenueChange} canSeeShooters={canSeeShooters} />
                 <BrandCallout spend={brandSpend} venue={venue} />
                 <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
                   <KpiCard label="Total Spend"  value={money(kpis.spend)} sub={venue} />
