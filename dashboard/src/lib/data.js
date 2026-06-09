@@ -44,12 +44,9 @@ export function getBrandOnlySpend(rows) {
     .reduce((a, r) => a + num(r.Cost), 0);
 }
 
-/** Returns only brand/generic/shooters rows (venue = Shooters Brussels OR no venue). */
+/** Returns only WoodCutter brand/generic rows (no specific venue, excludes Shooters). */
 export function filterBrandCampaigns(rows) {
-  return rows.filter((r) => {
-    const v = parseVenue(r.CampaignName);
-    return v === "Shooters Brussels" || v === null;
-  });
+  return rows.filter((r) => parseVenue(r.CampaignName) === null);
 }
 
 const COUNTRY_PATTERNS = [
