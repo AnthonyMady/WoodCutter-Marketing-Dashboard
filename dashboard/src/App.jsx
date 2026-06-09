@@ -66,7 +66,7 @@ export default function App() {
   const { start, end } = data ? getDateRange(preset, data.googleAds) : {};
   const byDate_all = data ? filterByDate(data.googleAds, start, end) : [];
   const filtered   = filterByVenue(byDate_all, venue);
-  const brandSpend = venue !== "All venues" ? getBrandOnlySpend(byDate_all) : 0;
+  const brandSpend = (venue !== "All venues" && venue !== "Shooters Brussels") ? getBrandOnlySpend(byDate_all) : 0;
   const kpis       = computeKpis(filtered);
   const byDate     = aggregateByDate(filtered);
   const campaigns  = aggregateByCampaign(filtered);
