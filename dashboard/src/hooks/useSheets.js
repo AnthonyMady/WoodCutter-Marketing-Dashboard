@@ -15,9 +15,10 @@ export function useSheets() {
         fetchSheet("meta"),
       ]);
 
-      // Filter out any rows where Date looks like a header
+      // Filter out any rows where Date isn't a real YYYY-MM-DD value (header bleed-through)
+      const dateRe = /^\d{4}-\d{2}-\d{2}$/;
       const rows = rowsToObjects(gRaw.headers, gRaw.rows)
-        .filter((r) => r.Date && r.Date !== "Date");
+        .filter((r) => r.Date && dateRe.test(r.Date));
 
       setData({
         googleAds: rows,
