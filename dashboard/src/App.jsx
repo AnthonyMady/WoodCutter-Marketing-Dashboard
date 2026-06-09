@@ -7,7 +7,7 @@ const SHOOTERS_ALLOWED = [
   "julien.vandenitte.work@gmail.com",
 ];
 import {
-  filterByDate, filterByVenue, aggregateByDate, aggregateByCampaign,
+  filterByDate, filterByVenue, filterBrandCampaigns, aggregateByDate, aggregateByCampaign,
   aggregateByCountry, computeKpis, getDateRange, getBrandOnlySpend,
 } from "./lib/data.js";
 import { useSheets } from "./hooks/useSheets.js";
@@ -23,9 +23,10 @@ import CampaignTable     from "./components/CampaignTable.jsx";
 const money = (n) => `€${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 const NAV = [
-  { icon: "▦", label: "Overview",   key: "overview" },
-  { icon: "◎", label: "Campaigns",  key: "campaigns" },
-  { icon: "◈", label: "Venues",     key: "venues" },
+  { icon: "▦", label: "Overview",         key: "overview" },
+  { icon: "◎", label: "Campaigns",        key: "campaigns" },
+  { icon: "◈", label: "Venues",           key: "venues" },
+  { icon: "◉", label: "Brand Campaigns",  key: "brand" },
 ];
 
 export default function App() {
@@ -76,6 +77,7 @@ export default function App() {
     overview:  { title: "Campaign Overview",    sub: `Google Ads · ${start ?? "…"} → ${end ?? "…"}` },
     campaigns: { title: "Campaign Performance", sub: "Detailed campaign breakdown" },
     venues:    { title: "Venue Analysis",       sub: "Performance by location" },
+    brand:     { title: "Brand Campaigns",      sub: "Brand, Generic & Shooters campaigns" },
   };
 
   // Sign-in screen
@@ -202,6 +204,30 @@ export default function App() {
                 <CampaignTable campaigns={campaigns} />
               </>
             )}
+
+            {/* ── BRAND ── */}
+            {view === "brand" && (() => {
+              const brandRows     = filterBrandCampaigns(filterByDate(data.googleAds, start, end));
+              const brandKpis     = computeKpis(brandRows);
+              const brandByDate   = aggregateByDate(brandRows);
+              const brandCampaigns = aggregateByCampaign(brandRows);
+              return (
+                <>
+                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+                    <KpiCard label="Total Spend"  value={money(brandKpis.spend)}       sub="brand + generic" />
+                    <KpiCard label="Conversions"  value={brandKpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${brandKpis.cpa.toFixed(2)} CPA`} />
+                    <KpiCard label="Conv. Value"  value={money(brandKpis.convValue)} />
+                    <KpiCard label="ROAS"         value={brandKpis.roas.toFixed(2) + "x"} sub={`€${brandKpis.cpc.toFixed(2)} CPC`} />
+                    <KpiCard label="Clicks"       value={brandKpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(brandKpis.ctr * 100).toFixed(2)}% CTR`} />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
+                    <SpendChart data={brandByDate} />
+                    <TopCampaignsChart campaigns={brandCampaigns} metric="roas" label="ROAS" />
+                  </div>
+                  <CampaignTable campaigns={brandCampaigns} />
+                </>
+              );
+            })()}
 
             {/* ── VENUES ── */}
             {view === "venues" && (

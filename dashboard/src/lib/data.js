@@ -44,6 +44,14 @@ export function getBrandOnlySpend(rows) {
     .reduce((a, r) => a + num(r.Cost), 0);
 }
 
+/** Returns only brand/generic/shooters rows (venue = Shooters Brussels OR no venue). */
+export function filterBrandCampaigns(rows) {
+  return rows.filter((r) => {
+    const v = parseVenue(r.CampaignName);
+    return v === "Shooters Brussels" || v === null;
+  });
+}
+
 const COUNTRY_PATTERNS = [
   { pattern: /\bFR\b/,  label: "France" },
   { pattern: /\bNL\b/,  label: "Netherlands" },
