@@ -17,16 +17,17 @@ import CampaignTable     from "./components/CampaignTable.jsx";
 const money = (n) => `€${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 const NAV = [
-  { icon: "▦", label: "Overview" },
-  { icon: "◎", label: "Campaigns" },
-  { icon: "◈", label: "Venues" },
+  { icon: "▦", label: "Overview",   key: "overview" },
+  { icon: "◎", label: "Campaigns",  key: "campaigns" },
+  { icon: "◈", label: "Venues",     key: "venues" },
 ];
 
 export default function App() {
-  const [authed, setAuthed]   = useState(false);
+  const [authed, setAuthed]     = useState(false);
   const [gsiReady, setGsiReady] = useState(false);
-  const [preset, setPreset]   = useState("30d");
-  const [venue, setVenue]     = useState("All venues");
+  const [preset, setPreset]     = useState("30d");
+  const [venue, setVenue]       = useState("All venues");
+  const [view, setView]         = useState("overview");
   const { data, loading, error, load } = useSheets();
 
   useEffect(() => {
@@ -44,27 +45,30 @@ export default function App() {
   const handleSignOut = () => { signOut(); setAuthed(false); };
 
   const { start, end } = data ? getDateRange(preset, data.googleAds) : {};
-  const byDate_all  = data ? filterByDate(data.googleAds, start, end) : [];
-  const filtered    = filterByVenue(byDate_all, venue);
-  const brandSpend  = venue !== "All venues" ? getBrandOnlySpend(byDate_all) : 0;
-  const kpis        = computeKpis(filtered);
-  const byDate      = aggregateByDate(filtered);
-  const campaigns   = aggregateByCampaign(filtered);
-  const countries   = aggregateByCountry(filtered);
+  const byDate_all = data ? filterByDate(data.googleAds, start, end) : [];
+  const filtered   = filterByVenue(byDate_all, venue);
+  const brandSpend = venue !== "All venues" ? getBrandOnlySpend(byDate_all) : 0;
+  const kpis       = computeKpis(filtered);
+  const byDate     = aggregateByDate(filtered);
+  const campaigns  = aggregateByCampaign(filtered);
+  const countries  = aggregateByCountry(filtered);
+
+  const PAGE_TITLES = {
+    overview:  { title: "Campaign Overview",    sub: `Google Ads · ${start ?? "…"} → ${end ?? "…"}` },
+    campaigns: { title: "Campaign Performance", sub: "Detailed campaign breakdown" },
+    venues:    { title: "Venue Analysis",       sub: "Performance by location" },
+  };
 
   // Sign-in screen
   if (!authed) {
     return (
-      <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f0f2f5", gap: 16 }}>
+      <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#f0f2f5" }}>
         <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, padding: "48px 56px", textAlign: "center", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.07)" }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>📊</div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111827", marginBottom: 6, letterSpacing: "-0.4px" }}>WoodCutter Marketing</h1>
           <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 28 }}>Sign in to view your campaign performance</p>
-          <button
-            onClick={handleSignIn}
-            disabled={!gsiReady}
-            style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, padding: "12px 32px", fontSize: 14, fontWeight: 600, cursor: "pointer", opacity: gsiReady ? 1 : 0.5 }}
-          >
+          <button onClick={handleSignIn} disabled={!gsiReady}
+            style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, padding: "12px 32px", fontSize: 14, fontWeight: 600, cursor: "pointer", opacity: gsiReady ? 1 : 0.5 }}>
             {gsiReady ? "Sign in with Google" : "Loading…"}
           </button>
         </div>
@@ -84,12 +88,23 @@ export default function App() {
         </div>
 
         <nav style={{ padding: "12px", flex: 1 }}>
-          {NAV.map((n) => (
-            <div key={n.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, fontSize: 13.5, fontWeight: 500, color: n.label === "Overview" ? "#2563eb" : "#6b7280", background: n.label === "Overview" ? "#eff6ff" : "transparent", marginBottom: 2, cursor: "pointer" }}>
-              <span style={{ fontSize: 14 }}>{n.icon}</span>
-              {n.label}
-            </div>
-          ))}
+          {NAV.map((n) => {
+            const active = view === n.key;
+            return (
+              <div key={n.key} onClick={() => setView(n.key)} style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "9px 12px", borderRadius: 8,
+                fontSize: 13.5, fontWeight: 500,
+                color: active ? "#2563eb" : "#6b7280",
+                background: active ? "#eff6ff" : "transparent",
+                marginBottom: 2, cursor: "pointer",
+                transition: "all 0.15s",
+              }}>
+                <span style={{ fontSize: 14 }}>{n.icon}</span>
+                {n.label}
+              </div>
+            );
+          })}
         </nav>
 
         <div style={{ padding: "16px 24px", borderTop: "1px solid #f3f4f6" }}>
@@ -111,16 +126,15 @@ export default function App() {
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111827", letterSpacing: "-0.4px" }}>Campaign Overview</h1>
-            <p style={{ fontSize: 13, color: "#9ca3af", marginTop: 3 }}>
-              Google Ads · {start} → {end}
-            </p>
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111827", letterSpacing: "-0.4px" }}>
+              {PAGE_TITLES[view].title}
+            </h1>
+            <p style={{ fontSize: 13, color: "#9ca3af", marginTop: 3 }}>{PAGE_TITLES[view].sub}</p>
           </div>
           {data && <DateFilter value={preset} onChange={setPreset} />}
         </div>
 
         {loading && <p style={{ color: "#9ca3af", textAlign: "center", marginTop: 80 }}>Loading data…</p>}
-
         {error && (
           <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 16, color: "#991b1b", fontSize: 13 }}>
             <strong>Error:</strong> {error}
@@ -129,34 +143,65 @@ export default function App() {
 
         {data && !loading && (
           <>
-            {/* Venue filter */}
-            <VenueFilter value={venue} onChange={setVenue} />
-            <BrandCallout spend={brandSpend} venue={venue} />
+            {/* ── OVERVIEW ── */}
+            {view === "overview" && (
+              <>
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+                  <KpiCard label="Total Spend"  value={money(kpis.spend)}       sub={`${byDate_all.length.toLocaleString()} campaign days`} />
+                  <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
+                  <KpiCard label="Conv. Value"  value={money(kpis.convValue)}   sub="revenue attributed" />
+                  <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} sub={`€${kpis.cpc.toFixed(2)} CPC`} />
+                  <KpiCard label="Clicks"       value={kpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(kpis.ctr * 100).toFixed(2)}% CTR`} />
+                  <KpiCard label="Impressions"  value={kpis.impressions.toLocaleString(undefined, { maximumFractionDigits: 0 })} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
+                  <SpendChart data={aggregateByDate(filterByDate(data.googleAds, start, end))} />
+                  <CountryBreakdown countries={aggregateByCountry(filterByDate(data.googleAds, start, end))} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <TopCampaignsChart campaigns={aggregateByCampaign(filterByDate(data.googleAds, start, end))} metric="roas"  label="ROAS" />
+                  <TopCampaignsChart campaigns={aggregateByCampaign(filterByDate(data.googleAds, start, end))} metric="spend" label="Spend" />
+                </div>
+              </>
+            )}
 
-            {/* KPIs */}
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-              <KpiCard label="Total Spend"   value={money(kpis.spend)}       sub={`${filtered.length.toLocaleString()} campaign days`} />
-              <KpiCard label="Conversions"   value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
-              <KpiCard label="Conv. Value"   value={money(kpis.convValue)}   sub="total revenue attributed" />
-              <KpiCard label="ROAS"          value={kpis.roas.toFixed(2) + "x"} sub={`€${kpis.cpc.toFixed(2)} CPC`} />
-              <KpiCard label="Clicks"        value={kpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(kpis.ctr * 100).toFixed(2)}% CTR`} />
-              <KpiCard label="Impressions"   value={kpis.impressions.toLocaleString(undefined, { maximumFractionDigits: 0 })} />
-            </div>
+            {/* ── CAMPAIGNS ── */}
+            {view === "campaigns" && (
+              <>
+                <VenueFilter value={venue} onChange={setVenue} />
+                <BrandCallout spend={brandSpend} venue={venue} />
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+                  <KpiCard label="Total Spend"  value={money(kpis.spend)} />
+                  <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} sub={`€${kpis.cpc.toFixed(2)} CPC`} />
+                  <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
+                  <KpiCard label="Clicks"       value={kpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(kpis.ctr * 100).toFixed(2)}% CTR`} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+                  <TopCampaignsChart campaigns={campaigns} metric="roas"  label="ROAS" />
+                  <TopCampaignsChart campaigns={campaigns} metric="spend" label="Spend" />
+                </div>
+                <CampaignTable campaigns={campaigns} />
+              </>
+            )}
 
-            {/* Spend chart + Country */}
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-              <SpendChart data={byDate} />
-              <CountryBreakdown countries={countries} />
-            </div>
-
-            {/* Top campaigns */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-              <TopCampaignsChart campaigns={campaigns} metric="roas"  label="ROAS" />
-              <TopCampaignsChart campaigns={campaigns} metric="spend" label="Spend" />
-            </div>
-
-            {/* Table */}
-            <CampaignTable campaigns={campaigns} />
+            {/* ── VENUES ── */}
+            {view === "venues" && (
+              <>
+                <VenueFilter value={venue} onChange={setVenue} />
+                <BrandCallout spend={brandSpend} venue={venue} />
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+                  <KpiCard label="Total Spend"  value={money(kpis.spend)} sub={venue} />
+                  <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
+                  <KpiCard label="Conv. Value"  value={money(kpis.convValue)} />
+                  <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
+                  <SpendChart data={byDate} />
+                  <CountryBreakdown countries={countries} />
+                </div>
+                <CampaignTable campaigns={campaigns} />
+              </>
+            )}
           </>
         )}
       </div>
