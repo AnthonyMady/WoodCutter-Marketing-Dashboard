@@ -22,18 +22,25 @@ import CampaignTable     from "./components/CampaignTable.jsx";
 const money = (n) => `€${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 const NAV = [
-  { icon: "▦", label: "Overview",         key: "overview" },
-  { icon: "◎", label: "Campaigns",        key: "campaigns" },
-  { icon: "◈", label: "Venues",           key: "venues" },
-  { icon: "◉", label: "Brand Campaigns",  key: "brand" },
+  { icon: "▦", label: "Overview",        key: "overview" },
+  { icon: "◈", label: "Venues",          key: "venues" },
+  { icon: "◉", label: "Brand Campaigns", key: "brand" },
+  { icon: "🎯", label: "Shooters",       key: "shooters" },
 ];
 
+const PAGE_TITLES = {
+  overview:  { title: "Campaign Overview",    sub: "All venues · Google Ads" },
+  venues:    { title: "Venue Analysis",       sub: "Performance by location" },
+  brand:     { title: "Brand Campaigns",      sub: "Country-wide brand & generic campaigns" },
+  shooters:  { title: "Shooters Brussels",    sub: "Shooters Brussels · restricted access" },
+};
+
 export default function App() {
-  const [authed, setAuthed]     = useState(false);
-  const [gsiReady, setGsiReady] = useState(false);
-  const [preset, setPreset]     = useState("30d");
-  const [venue, setVenue]       = useState("All venues");
-  const [view, setView]         = useState("overview");
+  const [authed, setAuthed]       = useState(false);
+  const [gsiReady, setGsiReady]   = useState(false);
+  const [preset, setPreset]       = useState("30d");
+  const [venue, setVenue]         = useState("All venues");
+  const [view, setView]           = useState("overview");
   const [userEmail, setUserEmail] = useState(null);
   const { data, loading, error, load } = useSheets();
 
@@ -49,7 +56,6 @@ export default function App() {
 
   const handleToken = useCallback(() => {
     setAuthed(true);
-    // Email comes from the ID token decoded in google.js — give it a moment to populate
     setTimeout(() => setUserEmail(getUserEmail()), 500);
     load();
   }, [load]);
@@ -70,13 +76,6 @@ export default function App() {
   const byDate     = aggregateByDate(filtered);
   const campaigns  = aggregateByCampaign(filtered);
   const countries  = aggregateByCountry(filtered);
-
-  const PAGE_TITLES = {
-    overview:  { title: "Campaign Overview",    sub: `Google Ads · ${start ?? "…"} → ${end ?? "…"}` },
-    campaigns: { title: "Campaign Performance", sub: "Detailed campaign breakdown" },
-    venues:    { title: "Venue Analysis",       sub: "Performance by location" },
-    brand:     { title: "Brand Campaigns",      sub: "Brand, Generic & Shooters campaigns" },
-  };
 
   // Sign-in screen
   if (!authed) {
@@ -109,18 +108,25 @@ export default function App() {
         <nav style={{ padding: "12px", flex: 1 }}>
           {NAV.map((n) => {
             const active = view === n.key;
+            const isShooters = n.key === "shooters";
             return (
               <div key={n.key} onClick={() => setView(n.key)} style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: "9px 12px", borderRadius: 8,
                 fontSize: 13.5, fontWeight: 500,
-                color: active ? "#2563eb" : "#6b7280",
+                color: active ? "#2563eb" : isShooters ? "#9ca3af" : "#6b7280",
                 background: active ? "#eff6ff" : "transparent",
                 marginBottom: 2, cursor: "pointer",
                 transition: "all 0.15s",
+                borderTop: isShooters ? "1px solid #f3f4f6" : "none",
+                marginTop: isShooters ? 8 : 0,
+                paddingTop: isShooters ? 17 : 9,
               }}>
                 <span style={{ fontSize: 14 }}>{n.icon}</span>
-                {n.label}
+                <span style={{ flex: 1 }}>{n.label}</span>
+                {isShooters && !canSeeShooters && (
+                  <span style={{ fontSize: 10, color: "#d1d5db" }}>🔒</span>
+                )}
               </div>
             );
           })}
@@ -150,13 +156,35 @@ export default function App() {
             </h1>
             <p style={{ fontSize: 13, color: "#9ca3af", marginTop: 3 }}>{PAGE_TITLES[view].sub}</p>
           </div>
-          {data && <DateFilter value={preset} onChange={setPreset} />}
+          {data && view !== "shooters" && <DateFilter value={preset} onChange={setPreset} />}
+          {data && view === "shooters" && canSeeShooters && <DateFilter value={preset} onChange={setPreset} />}
         </div>
 
         {loading && <p style={{ color: "#9ca3af", textAlign: "center", marginTop: 80 }}>Loading data…</p>}
         {error && (
           <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: 16, color: "#991b1b", fontSize: 13 }}>
             <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {/* ── SHOOTERS ACCESS DENIED ── */}
+        {view === "shooters" && !canSeeShooters && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
+            <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, padding: "48px 56px", textAlign: "center", maxWidth: 420, boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
+              <div style={{ width: 56, height: 56, background: "#f3f4f6", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: 24 }}>
+                🔒
+              </div>
+              <h2 style={{ fontSize: 17, fontWeight: 700, color: "#111827", marginBottom: 8, letterSpacing: "-0.3px" }}>
+                Restricted Access
+              </h2>
+              <p style={{ fontSize: 13.5, color: "#6b7280", lineHeight: 1.6, marginBottom: 24 }}>
+                The Shooters Brussels section is only available to authorised team members.
+                If you need access, please contact your administrator.
+              </p>
+              <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 8, padding: "10px 16px", fontSize: 12, color: "#9ca3af" }}>
+                Signed in as <strong style={{ color: "#374151" }}>{userEmail ?? "unknown"}</strong>
+              </div>
+            </div>
           </div>
         )}
 
@@ -184,19 +212,19 @@ export default function App() {
               </>
             )}
 
-            {/* ── CAMPAIGNS ── */}
-            {view === "campaigns" && (
+            {/* ── VENUES ── */}
+            {view === "venues" && (
               <>
                 <VenueFilter value={venue} onChange={handleVenueChange} canSeeShooters={canSeeShooters} />
                 <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-                  <KpiCard label="Total Spend"  value={money(kpis.spend)} />
-                  <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} sub={`€${kpis.cpc.toFixed(2)} CPC`} />
+                  <KpiCard label="Total Spend"  value={money(kpis.spend)} sub={venue} />
                   <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
-                  <KpiCard label="Clicks"       value={kpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(kpis.ctr * 100).toFixed(2)}% CTR`} />
+                  <KpiCard label="Conv. Value"  value={money(kpis.convValue)} />
+                  <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                  <TopCampaignsChart campaigns={campaigns} metric="roas"  label="ROAS" />
-                  <TopCampaignsChart campaigns={campaigns} metric="spend" label="Spend" />
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
+                  <SpendChart data={byDate} />
+                  <CountryBreakdown countries={countries} />
                 </div>
                 <CampaignTable campaigns={campaigns} />
               </>
@@ -204,9 +232,9 @@ export default function App() {
 
             {/* ── BRAND ── */}
             {view === "brand" && (() => {
-              const brandRows     = filterBrandCampaigns(filterByDate(data.googleAds, start, end));
-              const brandKpis     = computeKpis(brandRows);
-              const brandByDate   = aggregateByDate(brandRows);
+              const brandRows      = filterBrandCampaigns(filterByDate(data.googleAds, start, end));
+              const brandKpis      = computeKpis(brandRows);
+              const brandByDate    = aggregateByDate(brandRows);
               const brandCampaigns = aggregateByCampaign(brandRows);
               return (
                 <>
@@ -226,23 +254,31 @@ export default function App() {
               );
             })()}
 
-            {/* ── VENUES ── */}
-            {view === "venues" && (
-              <>
-                <VenueFilter value={venue} onChange={handleVenueChange} canSeeShooters={canSeeShooters} />
-                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-                  <KpiCard label="Total Spend"  value={money(kpis.spend)} sub={venue} />
-                  <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
-                  <KpiCard label="Conv. Value"  value={money(kpis.convValue)} />
-                  <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-                  <SpendChart data={byDate} />
-                  <CountryBreakdown countries={countries} />
-                </div>
-                <CampaignTable campaigns={campaigns} />
-              </>
-            )}
+            {/* ── SHOOTERS ── */}
+            {view === "shooters" && canSeeShooters && (() => {
+              const shootersRows      = filterByDate(data.googleAds, start, end).filter(
+                (r) => { const v = (r.CampaignName || "").toLowerCase(); return /shooters|shooting.?bar|schietbar|exp.?rience.?tir/.test(v); }
+              );
+              const shootersKpis      = computeKpis(shootersRows);
+              const shootersByDate    = aggregateByDate(shootersRows);
+              const shootersCampaigns = aggregateByCampaign(shootersRows);
+              return (
+                <>
+                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+                    <KpiCard label="Total Spend"  value={money(shootersKpis.spend)}       sub="Shooters Brussels" />
+                    <KpiCard label="Conversions"  value={shootersKpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${shootersKpis.cpa.toFixed(2)} CPA`} />
+                    <KpiCard label="Conv. Value"  value={money(shootersKpis.convValue)} />
+                    <KpiCard label="ROAS"         value={shootersKpis.roas.toFixed(2) + "x"} sub={`€${shootersKpis.cpc.toFixed(2)} CPC`} />
+                    <KpiCard label="Clicks"       value={shootersKpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(shootersKpis.ctr * 100).toFixed(2)}% CTR`} />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
+                    <SpendChart data={shootersByDate} />
+                    <TopCampaignsChart campaigns={shootersCampaigns} metric="roas" label="ROAS" />
+                  </div>
+                  <CampaignTable campaigns={shootersCampaigns} />
+                </>
+              );
+            })()}
           </>
         )}
       </div>
