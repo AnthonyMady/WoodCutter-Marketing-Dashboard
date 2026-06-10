@@ -7,7 +7,6 @@ const FLAG = {
   "Frankfurt":         "🇩🇪",
   "Hamburg":           "🇩🇪",
   "Cologne":           "🇩🇪",
-  "Bonn":              "🇩🇪",
   "Leipzig":           "🇩🇪",
   "Shooters Brussels": "🇧🇪",
   "All venues":        "🌍",

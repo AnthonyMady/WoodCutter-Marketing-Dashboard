@@ -38,8 +38,9 @@ const PAGE_TITLES = {
 export default function App() {
   const [authed, setAuthed]       = useState(false);
   const [gsiReady, setGsiReady]   = useState(false);
-  const [preset, setPreset]       = useState("30d");
-  const [venue, setVenue]         = useState("All venues");
+  const [preset, setPreset]           = useState("30d");
+  const [customRange, setCustomRange] = useState(null);
+  const [venue, setVenue]             = useState("All venues");
   const [view, setView]           = useState("overview");
   const [userEmail, setUserEmail] = useState(null);
   const { data, loading, error, load } = useSheets();
@@ -69,7 +70,7 @@ export default function App() {
     setVenue(v);
   };
 
-  const { start, end } = data ? getDateRange(preset, data.googleAds) : {};
+  const { start, end } = data ? getDateRange(preset, data.googleAds, customRange) : {};
   const byDate_all = data ? filterByDate(data.googleAds, start, end) : [];
   const filtered   = filterByVenue(byDate_all, venue);
   const kpis       = computeKpis(filtered);
@@ -156,8 +157,12 @@ export default function App() {
             </h1>
             <p style={{ fontSize: 13, color: "#9ca3af", marginTop: 3 }}>{PAGE_TITLES[view].sub}</p>
           </div>
-          {data && view !== "shooters" && <DateFilter value={preset} onChange={setPreset} />}
-          {data && view === "shooters" && canSeeShooters && <DateFilter value={preset} onChange={setPreset} />}
+          {data && (view !== "shooters" || canSeeShooters) && (
+            <DateFilter
+              value={preset} onChange={setPreset}
+              customRange={customRange} onCustomRange={setCustomRange}
+            />
+          )}
         </div>
 
         {loading && <p style={{ color: "#9ca3af", textAlign: "center", marginTop: 80 }}>Loading data…</p>}

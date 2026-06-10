@@ -11,7 +11,6 @@ export const VENUES = [
   "Frankfurt",
   "Hamburg",
   "Cologne",
-  "Bonn",
   "Leipzig",
   "Shooters Brussels",
 ];
@@ -26,7 +25,6 @@ const VENUE_PATTERNS = [
   { pattern: /frankfurt/i,                          venue: "Frankfurt" },
   { pattern: /hamburg/i,                            venue: "Hamburg" },
   { pattern: /cologne/i,                            venue: "Cologne" },
-  { pattern: /\bbonn\b/i,                           venue: "Bonn" },
   { pattern: /leipzig/i,                            venue: "Leipzig" },
 ];
 
@@ -178,14 +176,15 @@ export function computeKpis(rows) {
 }
 
 /** Get the date range preset boundaries */
-export function getDateRange(preset, allRows) {
+export function getDateRange(preset, allRows, customRange = null) {
   const today = new Date();
   const fmt = (d) => d.toISOString().slice(0, 10);
 
-  if (preset === "7d")  return { start: fmt(new Date(today - 7  * 864e5)), end: fmt(today) };
-  if (preset === "30d") return { start: fmt(new Date(today - 30 * 864e5)), end: fmt(today) };
-  if (preset === "90d") return { start: fmt(new Date(today - 90 * 864e5)), end: fmt(today) };
-  if (preset === "ytd") return { start: `${today.getFullYear()}-01-01`,    end: fmt(today) };
+  if (preset === "7d")     return { start: fmt(new Date(today - 7  * 864e5)), end: fmt(today) };
+  if (preset === "30d")    return { start: fmt(new Date(today - 30 * 864e5)), end: fmt(today) };
+  if (preset === "90d")    return { start: fmt(new Date(today - 90 * 864e5)), end: fmt(today) };
+  if (preset === "ytd")    return { start: `${today.getFullYear()}-01-01`,    end: fmt(today) };
+  if (preset === "custom") return customRange ?? { start: null, end: null };
   if (preset === "all") {
     const dates = allRows.map((r) => r.Date).filter(Boolean).sort();
     return { start: dates[0] ?? fmt(today), end: dates[dates.length - 1] ?? fmt(today) };
