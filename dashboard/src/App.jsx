@@ -9,7 +9,7 @@ const SHOOTERS_ALLOWED = [
 
 import {
   filterByDate, filterByVenue, filterBrandCampaigns, excludeShooters,
-  aggregateByDate, aggregateByCampaign, aggregateByCountry,
+  aggregateByDate, aggregateByCampaign, aggregateByCountry, aggregateByVenue,
   computeKpis, getDateRange, normaliseMetaRow, parseVenue, num,
 } from "./lib/data.js";
 import { useSheets } from "./hooks/useSheets.js";
@@ -222,7 +222,7 @@ export default function App() {
                     <SpendChart data={byDate} />
                     <CountryBreakdown countries={countries} />
                   </div>
-                  <ActiveCampaignList rows={excludeShooters(data.googleAds)} source="google" />
+                  <ActiveCampaignList rows={filterByVenue(excludeShooters(data.googleAds), venue)} source="google" />
                 </>
               );
             })()}
@@ -233,8 +233,7 @@ export default function App() {
               const filtered  = filterByVenue(allRows, metaVenue);
               const kpis      = computeKpis(filtered);
               const byDate    = aggregateByDate(filtered);
-              const campaigns = aggregateByCampaign(filtered);
-              const countries = aggregateByCountry(filtered);
+              const venues    = aggregateByVenue(filtered);
               return (
                 <>
                   <VenueFilter value={metaVenue} onChange={setMetaVenue} />
@@ -247,9 +246,9 @@ export default function App() {
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
                     <SpendChart data={byDate} />
-                    <CountryBreakdown countries={countries} />
+                    <CountryBreakdown countries={venues} label="Spend by Venue" />
                   </div>
-                  <ActiveCampaignList rows={(data.metaAds ?? []).map(normaliseMetaRow).filter(r => parseVenue(r.CampaignName) !== "Shooters Brussels")} source="meta" />
+                  <ActiveCampaignList rows={filterByVenue(excludeShooters((data.metaAds ?? []).map(normaliseMetaRow)), metaVenue)} source="meta" />
                 </>
               );
             })()}

@@ -176,6 +176,23 @@ export function aggregateByCampaign(rows) {
   })).sort((a, b) => b.spend - a.spend);
 }
 
+/** Aggregate rows by venue (city) — for Meta Ads donut */
+export function aggregateByVenue(rows) {
+  const map = {};
+  for (const r of rows) {
+    const venue = parseVenue(r.CampaignName) ?? "Other";
+    if (venue === "Shooters Brussels") continue;
+    if (!map[venue]) map[venue] = { country: venue, spend: 0, conversions: 0, convValue: 0, clicks: 0 };
+    map[venue].spend       += num(r.Cost);
+    map[venue].conversions += num(r.Conversions);
+    map[venue].convValue   += num(r.ConversionValue);
+    map[venue].clicks      += num(r.Clicks);
+  }
+  return Object.values(map)
+    .map((c) => ({ ...c, roas: c.spend > 0 ? c.convValue / c.spend : 0 }))
+    .sort((a, b) => b.spend - a.spend);
+}
+
 /** Aggregate rows by country */
 export function aggregateByCountry(rows) {
   const map = {};
