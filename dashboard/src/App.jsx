@@ -25,17 +25,13 @@ import BlendChart          from "./components/BlendChart.jsx";
 
 const money = (n) => `€${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
-const NAV_SECTIONS = [
-  { label: "Google Ads", key: "google-overview" },
-  { label: "Meta Ads",   key: "meta-overview" },
-  { label: "Blend",      key: "blend-overview" },
-];
-
 const PAGE_TITLES = {
-  "google-overview": { title: "Google Ads",    sub: "Performance by venue" },
-  "meta-overview":   { title: "Meta Ads",      sub: "Performance by venue" },
-  "blend-overview":  { title: "Blend",         sub: "Google Ads + Meta Ads combined" },
-  "shooters":        { title: "Shooters Brussels", sub: "Restricted access" },
+  "google-overview":   { title: "Google Ads",        sub: "Performance by venue" },
+  "meta-overview":     { title: "Meta Ads",           sub: "Performance by venue" },
+  "blend-overview":    { title: "Blend",              sub: "Google Ads + Meta Ads combined" },
+  "shooters-google":   { title: "Shooters · Google Ads",  sub: "Shooters Brussels" },
+  "shooters-meta":     { title: "Shooters · Meta Ads",    sub: "Shooters Brussels" },
+  "shooters-blend":    { title: "Shooters · Blend",       sub: "Google Ads + Meta Ads combined" },
 };
 
 export default function App() {
@@ -106,7 +102,13 @@ export default function App() {
         </div>
 
         <nav style={{ padding: "12px", flex: 1, overflowY: "auto" }}>
-          {NAV_SECTIONS.map((item) => {
+          {/* WoodCutter section */}
+          <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", padding: "4px 12px 6px" }}>WoodCutter</p>
+          {[
+            { label: "Google Ads", key: "google-overview" },
+            { label: "Meta Ads",   key: "meta-overview" },
+            { label: "Blend",      key: "blend-overview" },
+          ].map((item) => {
             const active = view === item.key;
             return (
               <div key={item.key} onClick={() => setView(item.key)} style={{
@@ -123,19 +125,32 @@ export default function App() {
             );
           })}
 
-          {/* Shooters separator + item */}
-          <div style={{ borderTop: "1px solid #f3f4f6", marginTop: 8, paddingTop: 8 }}>
-            <div onClick={() => setView("shooters")} style={{
-              display: "flex", alignItems: "center", gap: 10,
-              padding: "8px 12px", borderRadius: 8,
-              fontSize: 13.5, fontWeight: 500,
-              color: view === "shooters" ? "#2563eb" : "#9ca3af",
-              background: view === "shooters" ? "#eff6ff" : "transparent",
-              cursor: "pointer", transition: "all 0.15s",
-            }}>
-              <span style={{ flex: 1 }}>Shooters</span>
-              {!canSeeShooters && <span style={{ fontSize: 10, color: "#d1d5db" }}>🔒</span>}
-            </div>
+          {/* Shooters section */}
+          <div style={{ borderTop: "1px solid #f3f4f6", marginTop: 10, paddingTop: 10 }}>
+            <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", padding: "4px 12px 6px", display: "flex", alignItems: "center", gap: 6 }}>
+              Shooters {!canSeeShooters && <span style={{ fontSize: 10 }}>🔒</span>}
+            </p>
+            {[
+              { label: "Google Ads", key: "shooters-google" },
+              { label: "Meta Ads",   key: "shooters-meta" },
+              { label: "Blend",      key: "shooters-blend" },
+            ].map((item) => {
+              const active = view === item.key;
+              return (
+                <div key={item.key} onClick={() => canSeeShooters && setView(item.key)} style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "9px 12px", borderRadius: 8,
+                  fontSize: 13.5, fontWeight: 500,
+                  color: !canSeeShooters ? "#d1d5db" : active ? "#2563eb" : "#6b7280",
+                  background: active ? "#eff6ff" : "transparent",
+                  marginBottom: 2,
+                  cursor: canSeeShooters ? "pointer" : "default",
+                  transition: "all 0.15s",
+                }}>
+                  {item.label}
+                </div>
+              );
+            })}
           </div>
         </nav>
 
@@ -163,7 +178,7 @@ export default function App() {
             </h1>
             <p style={{ fontSize: 13, color: "#9ca3af", marginTop: 3 }}>{PAGE_TITLES[view].sub}</p>
           </div>
-          {data && (view !== "shooters" || canSeeShooters) && (
+          {data && (!view.startsWith("shooters") || canSeeShooters) && (
             <DateFilter
               value={preset} onChange={setPreset}
               customRange={customRange} onCustomRange={setCustomRange}
@@ -179,7 +194,7 @@ export default function App() {
         )}
 
         {/* ── SHOOTERS ACCESS DENIED ── */}
-        {view === "shooters" && !canSeeShooters && (
+        {view.startsWith("shooters") && !canSeeShooters && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
             <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, padding: "48px 56px", textAlign: "center", maxWidth: 420, boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
               <div style={{ width: 56, height: 56, background: "#f3f4f6", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: 24 }}>
@@ -313,14 +328,56 @@ export default function App() {
               );
             })()}
 
-            {/* ── SHOOTERS ── */}
-            {view === "shooters" && canSeeShooters && (() => {
-              const gRows = filterByDate(data.googleAds, start, end).filter(
-                (r) => parseVenue(r.CampaignName) === "Shooters Brussels"
+            {/* ── SHOOTERS GOOGLE ADS ── */}
+            {view === "shooters-google" && canSeeShooters && (() => {
+              const rows     = filterByDate(data.googleAds, start, end).filter(r => parseVenue(r.CampaignName) === "Shooters Brussels");
+              const kpis     = computeKpis(rows);
+              const byDate   = aggregateByDate(rows);
+              const countries = aggregateByCountry(rows);
+              return (
+                <>
+                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+                    <KpiCard label="Total Spend"  value={money(kpis.spend)} sub="Shooters Brussels" />
+                    <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
+                    <KpiCard label="Conv. Value"  value={money(kpis.convValue)} sub="revenue attributed" />
+                    <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} sub={`€${kpis.cpc.toFixed(2)} CPC`} />
+                    <KpiCard label="Clicks"       value={kpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(kpis.ctr * 100).toFixed(2)}% CTR`} />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
+                    <SpendChart data={byDate} />
+                    <CountryBreakdown countries={countries} />
+                  </div>
+                  <ActiveCampaignList rows={rows} source="google" />
+                </>
               );
-              const mRows = filterByDate((data.metaAds ?? []).map(normaliseMetaRow), start, end).filter(
-                (r) => parseVenue(r.CampaignName) === "Shooters Brussels"
+            })()}
+
+            {/* ── SHOOTERS META ADS ── */}
+            {view === "shooters-meta" && canSeeShooters && (() => {
+              const rows   = filterByDate((data.metaAds ?? []).map(normaliseMetaRow), start, end).filter(r => parseVenue(r.CampaignName) === "Shooters Brussels");
+              const kpis   = computeKpis(rows);
+              const byDate = aggregateByDate(rows);
+              return (
+                <>
+                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+                    <KpiCard label="Total Spend"  value={money(kpis.spend)} sub="Shooters Brussels" />
+                    <KpiCard label="Actions"      value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={kpis.conversions > 0 ? `€${kpis.cpa.toFixed(2)} per action` : undefined} />
+                    <KpiCard label="Clicks"       value={kpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(kpis.ctr * 100).toFixed(2)}% CTR`} />
+                    <KpiCard label="CPC"          value={`€${kpis.cpc.toFixed(2)}`} />
+                    <KpiCard label="Impressions"  value={kpis.impressions.toLocaleString(undefined, { maximumFractionDigits: 0 })} />
+                  </div>
+                  <SpendChart data={byDate} />
+                  <div style={{ marginTop: 16 }}>
+                    <ActiveCampaignList rows={rows} source="meta" />
+                  </div>
+                </>
               );
+            })()}
+
+            {/* ── SHOOTERS BLEND ── */}
+            {view === "shooters-blend" && canSeeShooters && (() => {
+              const gRows = filterByDate(data.googleAds, start, end).filter(r => parseVenue(r.CampaignName) === "Shooters Brussels");
+              const mRows = filterByDate((data.metaAds ?? []).map(normaliseMetaRow), start, end).filter(r => parseVenue(r.CampaignName) === "Shooters Brussels");
               const gKpis = computeKpis(gRows);
               const mKpis = computeKpis(mRows);
               const totalSpend = gKpis.spend + mKpis.spend;
@@ -344,7 +401,6 @@ export default function App() {
 
               return (
                 <>
-                  {/* Split KPI row */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
                     <div>
                       <p style={{ fontSize: 11, fontWeight: 600, color: "#2563eb", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10 }}>
@@ -367,9 +423,7 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-
                   <BlendChart data={blendByDate} />
-
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
                     <ActiveCampaignList rows={gRows} source="google" />
                     <ActiveCampaignList rows={mRows} source="meta" />
