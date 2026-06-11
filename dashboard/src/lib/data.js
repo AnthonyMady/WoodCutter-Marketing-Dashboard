@@ -54,7 +54,7 @@ export function excludeShooters(rows) {
 
 /**
  * Normalise a Meta Ads row to the same shape as a Google Ads row.
- * Meta fields: date_start, campaign_name, impressions, clicks, spend, actions, purchase_roas, ctr, cpc
+ * Meta fields: date_start, campaign_name, impressions, clicks, spend, purchase_conversions, purchase_roas, ctr, cpc
  */
 export function normaliseMetaRow(r) {
   return {
@@ -63,7 +63,7 @@ export function normaliseMetaRow(r) {
     Impressions:     r.impressions ?? "0",
     Clicks:          r.clicks ?? "0",
     Cost:            r.spend ?? "0",
-    Conversions:     r.actions ?? "0",
+    Conversions:     r.purchase_conversions ?? "0",
     ConversionValue: "0",
     CTR:             r.ctr ?? "0",
     CPC:             r.cpc ?? "0",
