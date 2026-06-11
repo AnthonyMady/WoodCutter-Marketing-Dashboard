@@ -10,16 +10,18 @@ const SHOOTERS_ALLOWED = [
 import {
   filterByDate, filterByVenue, filterBrandCampaigns, excludeShooters,
   aggregateByDate, aggregateByCampaign, aggregateByCountry,
-  computeKpis, getDateRange, normaliseMetaRow, num,
+  computeKpis, getDateRange, normaliseMetaRow, parseVenue, num,
 } from "./lib/data.js";
 import { useSheets } from "./hooks/useSheets.js";
 import KpiCard           from "./components/KpiCard.jsx";
 import DateFilter        from "./components/DateFilter.jsx";
 import VenueFilter       from "./components/VenueFilter.jsx";
 import SpendChart        from "./components/SpendChart.jsx";
-import TopCampaignsChart from "./components/TopCampaignsChart.jsx";
-import CountryBreakdown  from "./components/CountryBreakdown.jsx";
-import CampaignTable     from "./components/CampaignTable.jsx";
+import TopCampaignsChart   from "./components/TopCampaignsChart.jsx";
+import CountryBreakdown    from "./components/CountryBreakdown.jsx";
+import CampaignTable       from "./components/CampaignTable.jsx";
+import ActiveCampaignList  from "./components/ActiveCampaignList.jsx";
+import BlendChart          from "./components/BlendChart.jsx";
 
 const money = (n) => `€${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
@@ -219,10 +221,7 @@ export default function App() {
                     <SpendChart data={byDate} />
                     <CountryBreakdown countries={countries} />
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                    <TopCampaignsChart campaigns={campaigns} metric="roas"  label="ROAS" />
-                    <TopCampaignsChart campaigns={campaigns} metric="spend" label="Spend" />
-                  </div>
+                  <ActiveCampaignList rows={excludeShooters(data.googleAds)} source="google" />
                 </>
               );
             })()}
@@ -249,10 +248,7 @@ export default function App() {
                     <SpendChart data={byDate} />
                     <CountryBreakdown countries={countries} />
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                    <TopCampaignsChart campaigns={campaigns} metric="spend"  label="Spend" />
-                    <TopCampaignsChart campaigns={campaigns} metric="clicks" label="Clicks" />
-                  </div>
+                  <ActiveCampaignList rows={(data.metaAds ?? []).map(normaliseMetaRow).filter(r => parseVenue(r.CampaignName) !== "Shooters Brussels")} source="meta" />
                 </>
               );
             })()}
@@ -265,22 +261,23 @@ export default function App() {
               const mKpis  = computeKpis(mRows);
               const totalSpend = gKpis.spend + mKpis.spend;
 
-              // Merge spend by date for chart
+              // Merge spend + conversions by date for blend chart
               const dateMap = {};
               for (const r of gRows) {
                 if (!r.Date) continue;
-                dateMap[r.Date] = (dateMap[r.Date] ?? 0) + num(r.Cost);
+                if (!dateMap[r.Date]) dateMap[r.Date] = { gSpend: 0, mSpend: 0, conversions: 0 };
+                dateMap[r.Date].gSpend      += num(r.Cost);
+                dateMap[r.Date].conversions += num(r.Conversions);
               }
               for (const r of mRows) {
                 if (!r.Date) continue;
-                dateMap[r.Date] = (dateMap[r.Date] ?? 0) + num(r.Cost);
+                if (!dateMap[r.Date]) dateMap[r.Date] = { gSpend: 0, mSpend: 0, conversions: 0 };
+                dateMap[r.Date].mSpend      += num(r.Cost);
+                dateMap[r.Date].conversions += num(r.Conversions);
               }
               const blendByDate = Object.entries(dateMap)
                 .sort(([a], [b]) => a.localeCompare(b))
-                .map(([date, spend]) => ({ date, spend, clicks: 0, impressions: 0, conversions: 0, convValue: 0 }));
-
-              const gCampaigns = aggregateByCampaign(gRows);
-              const mCampaigns = aggregateByCampaign(mRows);
+                .map(([date, v]) => ({ date, ...v }));
 
               return (
                 <>
@@ -310,22 +307,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Combined spend chart */}
-                  <div style={{ marginBottom: 16 }}>
-                    <SpendChart data={blendByDate} />
-                  </div>
-
-                  {/* Top campaigns side by side */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                    <div>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: "#2563eb", marginBottom: 10 }}>Google Ads · top campaigns</p>
-                      <TopCampaignsChart campaigns={gCampaigns} metric="spend" label="Spend" />
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: "#0866ff", marginBottom: 10 }}>Meta Ads · top campaigns</p>
-                      <TopCampaignsChart campaigns={mCampaigns} metric="spend" label="Spend" />
-                    </div>
-                  </div>
+                  <BlendChart data={blendByDate} />
                 </>
               );
             })()}
