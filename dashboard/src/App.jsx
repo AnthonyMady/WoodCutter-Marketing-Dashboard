@@ -7,7 +7,7 @@ const SHOOTERS_ALLOWED = [
   "julien.vandenitte.work@gmail.com",
 ];
 import {
-  filterByDate, filterByVenue, filterBrandCampaigns, aggregateByDate, aggregateByCampaign,
+  filterByDate, filterByVenue, filterBrandCampaigns, excludeShooters, aggregateByDate, aggregateByCampaign,
   aggregateByCountry, computeKpis, getDateRange,
 } from "./lib/data.js";
 import { useSheets } from "./hooks/useSheets.js";
@@ -196,26 +196,33 @@ export default function App() {
         {data && !loading && (
           <>
             {/* ── OVERVIEW ── */}
-            {view === "overview" && (
-              <>
-                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-                  <KpiCard label="Total Spend"  value={money(kpis.spend)}       sub={`${byDate_all.length.toLocaleString()} campaign days`} />
-                  <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
-                  <KpiCard label="Conv. Value"  value={money(kpis.convValue)}   sub="revenue attributed" />
-                  <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} sub={`€${kpis.cpc.toFixed(2)} CPC`} />
-                  <KpiCard label="Clicks"       value={kpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(kpis.ctr * 100).toFixed(2)}% CTR`} />
-                  <KpiCard label="Impressions"  value={kpis.impressions.toLocaleString(undefined, { maximumFractionDigits: 0 })} />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-                  <SpendChart data={aggregateByDate(filterByDate(data.googleAds, start, end))} />
-                  <CountryBreakdown countries={aggregateByCountry(filterByDate(data.googleAds, start, end))} />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                  <TopCampaignsChart campaigns={aggregateByCampaign(filterByDate(data.googleAds, start, end))} metric="roas"  label="ROAS" />
-                  <TopCampaignsChart campaigns={aggregateByCampaign(filterByDate(data.googleAds, start, end))} metric="spend" label="Spend" />
-                </div>
-              </>
-            )}
+            {view === "overview" && (() => {
+              const wcRows     = excludeShooters(filterByDate(data.googleAds, start, end));
+              const wcKpis     = computeKpis(wcRows);
+              const wcByDate   = aggregateByDate(wcRows);
+              const wcCampaigns = aggregateByCampaign(wcRows);
+              const wcCountries = aggregateByCountry(wcRows);
+              return (
+                <>
+                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
+                    <KpiCard label="Total Spend"  value={money(wcKpis.spend)}       sub={`${wcRows.length.toLocaleString()} campaign days`} />
+                    <KpiCard label="Conversions"  value={wcKpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${wcKpis.cpa.toFixed(2)} CPA`} />
+                    <KpiCard label="Conv. Value"  value={money(wcKpis.convValue)}   sub="revenue attributed" />
+                    <KpiCard label="ROAS"         value={wcKpis.roas.toFixed(2) + "x"} sub={`€${wcKpis.cpc.toFixed(2)} CPC`} />
+                    <KpiCard label="Clicks"       value={wcKpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(wcKpis.ctr * 100).toFixed(2)}% CTR`} />
+                    <KpiCard label="Impressions"  value={wcKpis.impressions.toLocaleString(undefined, { maximumFractionDigits: 0 })} />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
+                    <SpendChart data={wcByDate} />
+                    <CountryBreakdown countries={wcCountries} />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                    <TopCampaignsChart campaigns={wcCampaigns} metric="roas"  label="ROAS" />
+                    <TopCampaignsChart campaigns={wcCampaigns} metric="spend" label="Spend" />
+                  </div>
+                </>
+              );
+            })()}
 
             {/* ── VENUES ── */}
             {view === "venues" && (

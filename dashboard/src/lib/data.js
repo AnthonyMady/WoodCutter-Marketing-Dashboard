@@ -47,6 +47,11 @@ export function filterBrandCampaigns(rows) {
   return rows.filter((r) => parseVenue(r.CampaignName) === null);
 }
 
+/** Removes all Shooters Brussels rows — used to keep Overview WoodCutter-only. */
+export function excludeShooters(rows) {
+  return rows.filter((r) => parseVenue(r.CampaignName) !== "Shooters Brussels");
+}
+
 const COUNTRY_PATTERNS = [
   { pattern: /\bFR\b/,  label: "France" },
   { pattern: /\bNL\b/,  label: "Netherlands" },
