@@ -222,7 +222,7 @@ export default function App() {
                     <SpendChart data={byDate} />
                     <CountryBreakdown countries={countries} />
                   </div>
-                  <ActiveCampaignList rows={filterByVenue(excludeShooters(data.googleAds), venue)} source="google" />
+                  <ActiveCampaignList rows={filtered} source="google" />
                 </>
               );
             })()}
@@ -248,7 +248,7 @@ export default function App() {
                     <SpendChart data={byDate} />
                     <CountryBreakdown countries={venues} label="Spend by Venue" />
                   </div>
-                  <ActiveCampaignList rows={filterByVenue(excludeShooters((data.metaAds ?? []).map(normaliseMetaRow)), metaVenue)} source="meta" />
+                  <ActiveCampaignList rows={filtered} source="meta" />
                 </>
               );
             })()}

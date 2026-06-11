@@ -1,19 +1,14 @@
 import { useMemo } from "react";
-import { filterByDate, aggregateByCampaign, num } from "../lib/data.js";
+import { aggregateByCampaign, num } from "../lib/data.js";
 
 const money = (n) => `€${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const pct   = (n) => `${(Number(n) * 100).toFixed(1)}%`;
 
 export default function ActiveCampaignList({ rows, source = "google" }) {
-  // "Active" = has spend in the last 7 days regardless of the global date filter
-  const today = new Date();
-  const d7    = new Date(today - 7 * 864e5).toISOString().slice(0, 10);
-  const now   = today.toISOString().slice(0, 10);
-
+  // rows are already date+venue filtered by the parent — just aggregate
   const active = useMemo(() => {
-    const recent = filterByDate(rows, d7, now).filter(r => num(r.Cost) > 0);
-    return aggregateByCampaign(recent).filter(c => c.spend > 0);
-  }, [rows, d7, now]);
+    return aggregateByCampaign(rows.filter(r => num(r.Cost) > 0)).filter(c => c.spend > 0);
+  }, [rows]);
 
   const isGoogle = source === "google";
   const accentColor = isGoogle ? "#2563eb" : "#0866ff";
@@ -22,7 +17,7 @@ export default function ActiveCampaignList({ rows, source = "google" }) {
     <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: 24 }}>
       <div style={{ marginBottom: 16 }}>
         <p style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>Active campaigns</p>
-        <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>Last 7 days · {active.length} running</p>
+        <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>Selected period · {active.length} campaigns</p>
       </div>
 
       {active.length === 0 ? (
