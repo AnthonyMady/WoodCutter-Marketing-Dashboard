@@ -20,7 +20,7 @@ const VENUE_PATTERNS = [
   { pattern: /shooters|shooting.?bar|schietbar|exp.?rience.?tir|^brand_|^generic_/i, venue: "Shooters Brussels" },
   // Venue-specific campaigns
   { pattern: /bruxelles|BEL.*french|french.*BEL/i, venue: "Brussels" },
-  { pattern: /BEL.*dutch|dutch.*BEL/i,             venue: "Antwerp" },
+  { pattern: /BEL.*dutch|dutch.*BEL|antwerp/i,      venue: "Antwerp" },
   { pattern: /berlin/i,                             venue: "Berlin" },
   { pattern: /frankfurt/i,                          venue: "Frankfurt" },
   { pattern: /hamburg/i,                            venue: "Hamburg" },
