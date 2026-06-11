@@ -7,42 +7,38 @@ const SHOOTERS_ALLOWED = [
   "julien.vandenitte.work@gmail.com",
 ];
 import {
-  filterByDate, filterByVenue, filterBrandCampaigns, excludeShooters, aggregateByDate, aggregateByCampaign,
-  aggregateByCountry, computeKpis, getDateRange,
+  filterByDate, filterBrandCampaigns, aggregateByDate, aggregateByCampaign,
+  computeKpis, getDateRange,
 } from "./lib/data.js";
 import { useSheets } from "./hooks/useSheets.js";
 import KpiCard           from "./components/KpiCard.jsx";
 import DateFilter        from "./components/DateFilter.jsx";
-import VenueFilter       from "./components/VenueFilter.jsx";
 import SpendChart        from "./components/SpendChart.jsx";
 import TopCampaignsChart from "./components/TopCampaignsChart.jsx";
-import CountryBreakdown  from "./components/CountryBreakdown.jsx";
 import CampaignTable     from "./components/CampaignTable.jsx";
+import PerformanceTab   from "./components/PerformanceTab.jsx";
 
 const money = (n) => `€${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 const NAV = [
-  { icon: "▦", label: "Overview",        key: "overview" },
-  { icon: "◈", label: "Venues",          key: "venues" },
+  { icon: "▦", label: "Performance",     key: "performance" },
   { icon: "◉", label: "Brand Campaigns", key: "brand" },
   { icon: "🎯", label: "Shooters",       key: "shooters" },
 ];
 
 const PAGE_TITLES = {
-  overview:  { title: "Campaign Overview",    sub: "All venues · Google Ads" },
-  venues:    { title: "Venue Analysis",       sub: "Performance by location" },
-  brand:     { title: "Brand Campaigns",      sub: "Country-wide brand & generic campaigns" },
-  shooters:  { title: "Shooters Brussels",    sub: "Shooters Brussels · restricted access" },
+  performance: { title: "Performance",        sub: "Google Ads & Meta Ads · all venues" },
+  brand:       { title: "Brand Campaigns",    sub: "Country-wide brand & generic campaigns" },
+  shooters:    { title: "Shooters Brussels",  sub: "Shooters Brussels · restricted access" },
 };
 
 export default function App() {
   const [authed, setAuthed]       = useState(false);
   const [gsiReady, setGsiReady]   = useState(false);
   const [preset, setPreset]           = useState("30d");
+  const [view, setView]               = useState("performance");
   const [customRange, setCustomRange] = useState(null);
-  const [venue, setVenue]             = useState("All venues");
-  const [view, setView]           = useState("overview");
-  const [userEmail, setUserEmail] = useState(null);
+  const [userEmail, setUserEmail]     = useState(null);
   const { data, loading, error, load } = useSheets();
 
   const canSeeShooters = SHOOTERS_ALLOWED.includes(userEmail);
@@ -65,18 +61,7 @@ export default function App() {
   const handleSignIn  = () => requestAccessToken();
   const handleSignOut = () => { signOut(); setAuthed(false); setUserEmail(null); };
 
-  const handleVenueChange = (v) => {
-    if (v === "Shooters Brussels" && !canSeeShooters) return;
-    setVenue(v);
-  };
-
   const { start, end } = data ? getDateRange(preset, data.googleAds, customRange) : {};
-  const byDate_all = data ? excludeShooters(filterByDate(data.googleAds, start, end)) : [];
-  const filtered   = filterByVenue(byDate_all, venue);
-  const kpis       = computeKpis(filtered);
-  const byDate     = aggregateByDate(filtered);
-  const campaigns  = aggregateByCampaign(filtered);
-  const countries  = aggregateByCountry(filtered);
 
   // Sign-in screen
   if (!authed) {
@@ -195,51 +180,9 @@ export default function App() {
 
         {data && !loading && (
           <>
-            {/* ── OVERVIEW ── */}
-            {view === "overview" && (() => {
-              const wcRows     = excludeShooters(filterByDate(data.googleAds, start, end));
-              const wcKpis     = computeKpis(wcRows);
-              const wcByDate   = aggregateByDate(wcRows);
-              const wcCampaigns = aggregateByCampaign(wcRows);
-              const wcCountries = aggregateByCountry(wcRows);
-              return (
-                <>
-                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-                    <KpiCard label="Total Spend"  value={money(wcKpis.spend)}       sub={`${wcRows.length.toLocaleString()} campaign days`} />
-                    <KpiCard label="Conversions"  value={wcKpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${wcKpis.cpa.toFixed(2)} CPA`} />
-                    <KpiCard label="Conv. Value"  value={money(wcKpis.convValue)}   sub="revenue attributed" />
-                    <KpiCard label="ROAS"         value={wcKpis.roas.toFixed(2) + "x"} sub={`€${wcKpis.cpc.toFixed(2)} CPC`} />
-                    <KpiCard label="Clicks"       value={wcKpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(wcKpis.ctr * 100).toFixed(2)}% CTR`} />
-                    <KpiCard label="Impressions"  value={wcKpis.impressions.toLocaleString(undefined, { maximumFractionDigits: 0 })} />
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-                    <SpendChart data={wcByDate} />
-                    <CountryBreakdown countries={wcCountries} />
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                    <TopCampaignsChart campaigns={wcCampaigns} metric="roas"  label="ROAS" />
-                    <TopCampaignsChart campaigns={wcCampaigns} metric="spend" label="Spend" />
-                  </div>
-                </>
-              );
-            })()}
-
-            {/* ── VENUES ── */}
-            {view === "venues" && (
-              <>
-                <VenueFilter value={venue} onChange={handleVenueChange} />
-                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-                  <KpiCard label="Total Spend"  value={money(kpis.spend)} sub={venue} />
-                  <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
-                  <KpiCard label="Conv. Value"  value={money(kpis.convValue)} />
-                  <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-                  <SpendChart data={byDate} />
-                  <CountryBreakdown countries={countries} />
-                </div>
-                <CampaignTable campaigns={campaigns} />
-              </>
+            {/* ── PERFORMANCE ── */}
+            {view === "performance" && (
+              <PerformanceTab data={data} start={start} end={end} canSeeShooters={canSeeShooters} />
             )}
 
             {/* ── BRAND ── */}
