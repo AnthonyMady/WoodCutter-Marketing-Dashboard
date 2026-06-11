@@ -10,18 +10,23 @@ export function useSheets() {
     setLoading(true);
     setError(null);
     try {
-      const [gRaw, metaRaw] = await Promise.all([
+      const [gRaw, metaRaw, metaAdsRaw] = await Promise.all([
         fetchSheet("google_ads"),
         fetchSheet("meta"),
+        fetchSheet("meta_ads"),
       ]);
 
-      // Filter out any rows where Date isn't a real YYYY-MM-DD value (header bleed-through)
       const dateRe = /^\d{4}-\d{2}-\d{2}$/;
-      const rows = rowsToObjects(gRaw.headers, gRaw.rows)
+
+      const googleAds = rowsToObjects(gRaw.headers, gRaw.rows)
         .filter((r) => r.Date && dateRe.test(r.Date));
 
+      const metaAds = rowsToObjects(metaAdsRaw.headers, metaAdsRaw.rows)
+        .filter((r) => r.date_start && dateRe.test(r.date_start));
+
       setData({
-        googleAds: rows,
+        googleAds,
+        metaAds,
         meta: rowsToObjects(metaRaw.headers, metaRaw.rows)[0] ?? {},
       });
     } catch (e) {

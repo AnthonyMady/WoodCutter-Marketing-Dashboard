@@ -52,6 +52,36 @@ export function excludeShooters(rows) {
   return rows.filter((r) => parseVenue(r.CampaignName) !== "Shooters Brussels");
 }
 
+/**
+ * Normalise a Meta Ads row to the same shape as a Google Ads row.
+ * Meta fields: date_start, campaign_name, impressions, clicks, spend, actions, purchase_roas, ctr, cpc
+ */
+export function normaliseMetaRow(r) {
+  return {
+    Date:            r.date_start ?? "",
+    CampaignName:    r.campaign_name ?? "",
+    Impressions:     r.impressions ?? "0",
+    Clicks:          r.clicks ?? "0",
+    Cost:            r.spend ?? "0",
+    Conversions:     r.actions ?? "0",
+    ConversionValue: "0",
+    CTR:             r.ctr ?? "0",
+    CPC:             r.cpc ?? "0",
+    ROAS:            r.purchase_roas ?? "0",
+    _source:         "meta",
+  };
+}
+
+export function normaliseGoogleRow(r) {
+  return { ...r, _source: "google" };
+}
+
+/** Filter rows by multiple venues. Empty array = all venues. */
+export function filterByVenues(rows, venues) {
+  if (!venues || venues.length === 0) return rows;
+  return rows.filter((r) => venues.includes(parseVenue(r.CampaignName) ?? "Brand/Generic"));
+}
+
 const COUNTRY_PATTERNS = [
   { pattern: /\bFR\b/,  label: "France" },
   { pattern: /\bNL\b/,  label: "Netherlands" },
