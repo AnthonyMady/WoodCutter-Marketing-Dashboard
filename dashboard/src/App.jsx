@@ -43,8 +43,9 @@ export default function App() {
   const [gsiReady, setGsiReady]       = useState(false);
   const [preset, setPreset]           = useState("30d");
   const [customRange, setCustomRange] = useState(null);
-  const [venue, setVenue]         = useState("All venues");
-  const [metaVenue, setMetaVenue] = useState("All venues");
+  const [venue, setVenue]           = useState("All venues");
+  const [metaVenue, setMetaVenue]   = useState("All venues");
+  const [blendVenue, setBlendVenue] = useState("All venues");
   const [view, setView]               = useState("google-overview");
   const [userEmail, setUserEmail]     = useState(null);
   const { data, loading, error, load } = useSheets();
@@ -255,8 +256,8 @@ export default function App() {
 
             {/* ── BLEND · OVERVIEW ── */}
             {view === "blend-overview" && (() => {
-              const gRows  = excludeShooters(filterByDate(data.googleAds, start, end));
-              const mRows  = excludeShooters(filterByDate((data.metaAds ?? []).map(normaliseMetaRow), start, end));
+              const gRows  = filterByVenue(excludeShooters(filterByDate(data.googleAds, start, end)), blendVenue);
+              const mRows  = filterByVenue(excludeShooters(filterByDate((data.metaAds ?? []).map(normaliseMetaRow), start, end)), blendVenue);
               const gKpis  = computeKpis(gRows);
               const mKpis  = computeKpis(mRows);
               const totalSpend = gKpis.spend + mKpis.spend;
@@ -281,6 +282,7 @@ export default function App() {
 
               return (
                 <>
+                  <VenueFilter value={blendVenue} onChange={setBlendVenue} />
                   {/* Split KPI row */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
                     {/* Google Ads block */}
