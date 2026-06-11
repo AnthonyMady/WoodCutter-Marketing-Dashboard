@@ -1,0 +1,21 @@
+name = "woodcutter-api"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# KV is the read-only data source for this Worker.
+# Refresh Worker is the only writer.
+[[kv_namespaces]]
+binding = "KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Set Access AUD via `wrangler secret put CF_ACCESS_AUD`
+# (the Access AUD tag from the Zero Trust dashboard).
+# Set the team domain via `wrangler secret put CF_ACCESS_TEAM_DOMAIN`
+# (e.g. woodcutter — used to fetch JWKS at https://{team}.cloudflareaccess.com/cdn-cgi/access/certs).
+
+[vars]
+SHOOTERS_ALLOWLIST = "anthony.mady.work@gmail.com,romain2felix@gmail.com,julien.vandenitte.work@gmail.com"
+
+[observability]
+enabled = true

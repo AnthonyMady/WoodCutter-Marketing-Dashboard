@@ -1,0 +1,38 @@
+name = "woodcutter-refresh"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Same KV namespace as the api worker — refresh is the writer, api is the reader.
+[[kv_namespaces]]
+binding = "KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Cron Triggers — Cloudflare runs these in UTC.
+# Brussels = UTC+1 (winter) / UTC+2 (summer). 06:00 Brussels ≈ 04:00–05:00 UTC.
+[triggers]
+crons = [
+  "*/30 * * * *",   # Stripe — every 30m
+  "7 * * * *",      # Odoo + Viva — hourly at :07 (offset to spread load)
+  "23 5 * * *"      # Supermetrics — daily 05:23 UTC (~06:23–07:23 Brussels)
+]
+
+[vars]
+ODOO_URL = "https://woodcutter.odoo.com"
+ODOO_DB = "woodcutter"
+ODOO_USER = "operations@woodcutter.be"
+
+# Stripe locations (used to iterate STRIPE_KEY_<NAME> secrets)
+STRIPE_LOCATIONS = "Belgium,Anvers,Berlin,Frankfurt,Hamburg,Bonn,Koln,Leipzig,Shooters Brussels"
+
+# Odoo companies — name:company_id (Belgium has no company filter)
+ODOO_COMPANIES = "Belgium:,Berlin:3,Frankfurt:2,Hamburg:5,Koln:6,Leipzig:12"
+
+# Belgium Odoo POS config names (split into Brussels + Anvers)
+ODOO_BELGIUM_POS_NAMES = "WoodCutter - Brussels,WoodCutter - Anvers"
+
+# Belgium invoice journal exclusions (avoid double-counting with Stripe/POS)
+ODOO_BELGIUM_EXCLUDE_JOURNALS = "BRU + ANT - ONLINE SALES,Customer Invoices,Ventes Stripe"
+
+[observability]
+enabled = true
