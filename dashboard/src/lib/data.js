@@ -54,7 +54,9 @@ export function excludeShooters(rows) {
 
 /**
  * Normalise a Meta Ads row to the same shape as a Google Ads row.
- * Meta fields: date_start, campaign_name, impressions, clicks, spend, purchase_conversions, purchase_roas, ctr, cpc
+ * Meta fields: date_start, campaign_name, impressions, clicks, spend,
+ *   offsite_conversions_fb_pixel_purchase, offsite_conversion_value_fb_pixel_purchase,
+ *   website_purchase_roas, ctr, cpc
  */
 export function normaliseMetaRow(r) {
   return {
@@ -63,11 +65,11 @@ export function normaliseMetaRow(r) {
     Impressions:     r.impressions ?? "0",
     Clicks:          r.clicks ?? "0",
     Cost:            r.spend ?? "0",
-    Conversions:     r.purchase_conversions ?? "0",
-    ConversionValue: "0",
+    Conversions:     r.offsite_conversions_fb_pixel_purchase ?? "0",
+    ConversionValue: r.offsite_conversion_value_fb_pixel_purchase ?? "0",
     CTR:             r.ctr ?? "0",
     CPC:             r.cpc ?? "0",
-    ROAS:            r.purchase_roas ?? "0",
+    ROAS:            r.website_purchase_roas ?? "0",
     _source:         "meta",
   };
 }
