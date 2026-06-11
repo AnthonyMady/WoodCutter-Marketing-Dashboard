@@ -1,13 +1,21 @@
-# Python
-__pycache__/
-*.pyc
-.env
-.env.local
-venv/
-
 # Node
 node_modules/
-dashboard/dist/
+dist/
+.wrangler/
+.dev.vars
+.env
+.env.local
+
+# Python (legacy)
+__pycache__/
+*.pyc
+venv/
 
 # Secrets
 *.json.secret
+
+# Editor
+.DS_Store
+*.log
+.claude/
+.vscode/launch.json
