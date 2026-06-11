@@ -84,64 +84,59 @@ export default function App() {
     <div style={{ display: "flex", minHeight: "100vh" }}>
 
       {/* Sidebar */}
-      <div style={{ width: 220, background: "#fff", borderRight: "1px solid #e5e7eb", display: "flex", flexDirection: "column", position: "fixed", top: 0, bottom: 0, left: 0, zIndex: 10 }}>
-        <div style={{ padding: "24px 24px 20px", borderBottom: "1px solid #f3f4f6" }}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", letterSpacing: "-0.3px" }}>
-            Wood<span style={{ color: "#2563eb" }}>Cutter</span> Ads
+      <div style={{ width: 200, background: "#fff", borderRight: "0.5px solid #e5e7eb", display: "flex", flexDirection: "column", position: "fixed", top: 0, bottom: 0, left: 0, zIndex: 10 }}>
+        <div style={{ padding: "20px 20px 16px" }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "#111827" }}>
+            WoodCutter <span style={{ color: "#185FA5" }}>Ads</span>
           </p>
         </div>
 
-        <nav style={{ padding: "12px", flex: 1 }}>
+        <nav style={{ padding: "8px", flex: 1 }}>
           {NAV.map((n) => {
             const active = view === n.key;
             const isShooters = n.key === "shooters";
             return (
-              <div key={n.key} onClick={() => setView(n.key)} style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "9px 12px", borderRadius: 8,
-                fontSize: 13.5, fontWeight: 500,
-                color: active ? "#2563eb" : isShooters ? "#9ca3af" : "#6b7280",
-                background: active ? "#eff6ff" : "transparent",
-                marginBottom: 2, cursor: "pointer",
-                transition: "all 0.15s",
-                borderTop: isShooters ? "1px solid #f3f4f6" : "none",
-                marginTop: isShooters ? 8 : 0,
-                paddingTop: isShooters ? 17 : 9,
-              }}>
-                <span style={{ fontSize: 14 }}>{n.icon}</span>
-                <span style={{ flex: 1 }}>{n.label}</span>
-                {isShooters && !canSeeShooters && (
-                  <span style={{ fontSize: 10, color: "#d1d5db" }}>🔒</span>
-                )}
+              <div key={n.key}>
+                {isShooters && <div style={{ borderTop: "0.5px solid #f3f4f6", margin: "6px 0" }} />}
+                <div onClick={() => setView(n.key)} style={{
+                  display: "flex", alignItems: "center", gap: 9,
+                  padding: "8px 10px", borderRadius: 8,
+                  fontSize: 13, fontWeight: active ? 500 : 400,
+                  color: active ? "#185FA5" : "#6b7280",
+                  background: active ? "#E6F1FB" : "transparent",
+                  cursor: "pointer",
+                }}>
+                  <span style={{ flex: 1 }}>{n.label}</span>
+                  {isShooters && !canSeeShooters && (
+                    <span style={{ fontSize: 11, color: "#d1d5db" }}>🔒</span>
+                  )}
+                </div>
               </div>
             );
           })}
         </nav>
 
-        <div style={{ padding: "16px 24px", borderTop: "1px solid #f3f4f6" }}>
+        <div style={{ padding: "14px 20px", borderTop: "0.5px solid #f3f4f6" }}>
           {data?.meta?.last_updated && (
-            <p style={{ fontSize: 11, color: "#9ca3af", marginBottom: 10 }}>
-              <span style={{ display: "inline-block", width: 6, height: 6, background: "#22c55e", borderRadius: "50%", marginRight: 6, verticalAlign: "middle" }} />
+            <p style={{ fontSize: 11, color: "#9ca3af", marginBottom: 8 }}>
+              <span style={{ display: "inline-block", width: 6, height: 6, background: "#22c55e", borderRadius: "50%", marginRight: 5, verticalAlign: "middle" }} />
               Synced {new Date(data.meta.last_updated).toLocaleDateString()}
             </p>
           )}
-          <button onClick={handleSignOut} style={{ fontSize: 12, color: "#9ca3af", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <button onClick={handleSignOut} style={{ fontSize: 11, color: "#9ca3af", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
             Sign out
           </button>
         </div>
       </div>
 
       {/* Main */}
-      <div style={{ marginLeft: 220, flex: 1, padding: "32px 32px" }}>
+      <div style={{ marginLeft: 200, flex: 1, padding: "28px 28px", background: "#f9fafb", minHeight: "100vh" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111827", letterSpacing: "-0.4px" }}>
-              {PAGE_TITLES[view].title}
-            </h1>
-            <p style={{ fontSize: 13, color: "#9ca3af", marginTop: 3 }}>{PAGE_TITLES[view].sub}</p>
-          </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <h1 style={{ fontSize: 17, fontWeight: 500, color: "#111827" }}>
+            {PAGE_TITLES[view].title}
+          </h1>
           {data && (view !== "shooters" || canSeeShooters) && (
             <DateFilter
               value={preset} onChange={setPreset}
@@ -193,14 +188,13 @@ export default function App() {
               const brandCampaigns = aggregateByCampaign(brandRows);
               return (
                 <>
-                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-                    <KpiCard label="Total Spend"  value={money(brandKpis.spend)}       sub="brand + generic" />
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+                    <KpiCard label="Total Spend"  value={money(brandKpis.spend)} />
                     <KpiCard label="Conversions"  value={brandKpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${brandKpis.cpa.toFixed(2)} CPA`} />
-                    <KpiCard label="Conv. Value"  value={money(brandKpis.convValue)} />
                     <KpiCard label="ROAS"         value={brandKpis.roas.toFixed(2) + "x"} sub={`€${brandKpis.cpc.toFixed(2)} CPC`} />
                     <KpiCard label="Clicks"       value={brandKpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(brandKpis.ctr * 100).toFixed(2)}% CTR`} />
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
                     <SpendChart data={brandByDate} />
                     <TopCampaignsChart campaigns={brandCampaigns} metric="roas" label="ROAS" />
                   </div>
@@ -219,14 +213,13 @@ export default function App() {
               const shootersCampaigns = aggregateByCampaign(shootersRows);
               return (
                 <>
-                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-                    <KpiCard label="Total Spend"  value={money(shootersKpis.spend)}       sub="Shooters Brussels" />
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+                    <KpiCard label="Total Spend"  value={money(shootersKpis.spend)} />
                     <KpiCard label="Conversions"  value={shootersKpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${shootersKpis.cpa.toFixed(2)} CPA`} />
-                    <KpiCard label="Conv. Value"  value={money(shootersKpis.convValue)} />
                     <KpiCard label="ROAS"         value={shootersKpis.roas.toFixed(2) + "x"} sub={`€${shootersKpis.cpc.toFixed(2)} CPC`} />
                     <KpiCard label="Clicks"       value={shootersKpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(shootersKpis.ctr * 100).toFixed(2)}% CTR`} />
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
                     <SpendChart data={shootersByDate} />
                     <TopCampaignsChart campaigns={shootersCampaigns} metric="roas" label="ROAS" />
                   </div>
