@@ -315,26 +315,65 @@ export default function App() {
 
             {/* ── SHOOTERS ── */}
             {view === "shooters" && canSeeShooters && (() => {
-              const rows      = filterByDate(data.googleAds, start, end).filter(
-                (r) => { const v = (r.CampaignName || "").toLowerCase(); return /shooters|shooting.?bar|schietbar|exp.?rience.?tir/.test(v); }
+              const gRows = filterByDate(data.googleAds, start, end).filter(
+                (r) => parseVenue(r.CampaignName) === "Shooters Brussels"
               );
-              const kpis      = computeKpis(rows);
-              const byDate    = aggregateByDate(rows);
-              const campaigns = aggregateByCampaign(rows);
+              const mRows = filterByDate((data.metaAds ?? []).map(normaliseMetaRow), start, end).filter(
+                (r) => parseVenue(r.CampaignName) === "Shooters Brussels"
+              );
+              const gKpis = computeKpis(gRows);
+              const mKpis = computeKpis(mRows);
+              const totalSpend = gKpis.spend + mKpis.spend;
+
+              const dateMap = {};
+              for (const r of gRows) {
+                if (!r.Date) continue;
+                if (!dateMap[r.Date]) dateMap[r.Date] = { gSpend: 0, mSpend: 0, conversions: 0 };
+                dateMap[r.Date].gSpend      += num(r.Cost);
+                dateMap[r.Date].conversions += num(r.Conversions);
+              }
+              for (const r of mRows) {
+                if (!r.Date) continue;
+                if (!dateMap[r.Date]) dateMap[r.Date] = { gSpend: 0, mSpend: 0, conversions: 0 };
+                dateMap[r.Date].mSpend      += num(r.Cost);
+                dateMap[r.Date].conversions += num(r.Conversions);
+              }
+              const blendByDate = Object.entries(dateMap)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([date, v]) => ({ date, ...v }));
+
               return (
                 <>
-                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-                    <KpiCard label="Total Spend"  value={money(kpis.spend)}       sub="Shooters Brussels" />
-                    <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
-                    <KpiCard label="Conv. Value"  value={money(kpis.convValue)} />
-                    <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} sub={`€${kpis.cpc.toFixed(2)} CPC`} />
-                    <KpiCard label="Clicks"       value={kpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(kpis.ctr * 100).toFixed(2)}% CTR`} />
+                  {/* Split KPI row */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+                    <div>
+                      <p style={{ fontSize: 11, fontWeight: 600, color: "#2563eb", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10 }}>
+                        Google Ads · {Math.round(gKpis.spend / (totalSpend || 1) * 100)}% of spend
+                      </p>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        <KpiCard label="Spend"       value={money(gKpis.spend)} />
+                        <KpiCard label="ROAS"        value={gKpis.roas.toFixed(2) + "x"} sub={`€${gKpis.cpc.toFixed(2)} CPC`} />
+                        <KpiCard label="Conversions" value={gKpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={gKpis.conversions > 0 ? `€${gKpis.cpa.toFixed(2)} CPA` : undefined} />
+                      </div>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 11, fontWeight: 600, color: "#0866ff", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10 }}>
+                        Meta Ads · {Math.round(mKpis.spend / (totalSpend || 1) * 100)}% of spend
+                      </p>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        <KpiCard label="Spend"   value={money(mKpis.spend)} />
+                        <KpiCard label="Clicks"  value={mKpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(mKpis.ctr * 100).toFixed(2)}% CTR`} />
+                        <KpiCard label="Actions" value={mKpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={mKpis.conversions > 0 ? `€${mKpis.cpa.toFixed(2)} / action` : undefined} />
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-                    <SpendChart data={byDate} />
-                    <TopCampaignsChart campaigns={campaigns} metric="roas" label="ROAS" />
+
+                  <BlendChart data={blendByDate} />
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
+                    <ActiveCampaignList rows={gRows} source="google" />
+                    <ActiveCampaignList rows={mRows} source="meta" />
                   </div>
-                  <CampaignTable campaigns={campaigns} />
                 </>
               );
             })()}
