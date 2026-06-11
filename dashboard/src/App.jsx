@@ -24,33 +24,16 @@ import CampaignTable     from "./components/CampaignTable.jsx";
 const money = (n) => `€${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 const NAV_SECTIONS = [
-  {
-    label: "Google Ads",
-    items: [
-      { label: "Overview",  key: "google-overview" },
-      { label: "Venues",    key: "google-venues" },
-    ],
-  },
-  {
-    label: "Meta Ads",
-    items: [
-      { label: "Overview",  key: "meta-overview" },
-    ],
-  },
-  {
-    label: "Blend",
-    items: [
-      { label: "Overview",  key: "blend-overview" },
-    ],
-  },
+  { label: "Google Ads", key: "google-overview" },
+  { label: "Meta Ads",   key: "meta-overview" },
+  { label: "Blend",      key: "blend-overview" },
 ];
 
 const PAGE_TITLES = {
-  "google-overview": { title: "Google Ads · Overview",    sub: "All WoodCutter venues" },
-  "google-venues":   { title: "Google Ads · Venues",      sub: "Performance by location" },
-  "meta-overview":   { title: "Meta Ads · Overview",      sub: "All WoodCutter venues" },
-  "blend-overview":  { title: "Blend · Overview",         sub: "Google Ads + Meta Ads combined" },
-  "shooters":        { title: "Shooters Brussels",        sub: "Restricted access" },
+  "google-overview": { title: "Google Ads",    sub: "Performance by venue" },
+  "meta-overview":   { title: "Meta Ads",      sub: "Performance by venue" },
+  "blend-overview":  { title: "Blend",         sub: "Google Ads + Meta Ads combined" },
+  "shooters":        { title: "Shooters Brussels", sub: "Restricted access" },
 };
 
 export default function App() {
@@ -58,7 +41,8 @@ export default function App() {
   const [gsiReady, setGsiReady]       = useState(false);
   const [preset, setPreset]           = useState("30d");
   const [customRange, setCustomRange] = useState(null);
-  const [venue, setVenue]             = useState("All venues");
+  const [venue, setVenue]         = useState("All venues");
+  const [metaVenue, setMetaVenue] = useState("All venues");
   const [view, setView]               = useState("google-overview");
   const [userEmail, setUserEmail]     = useState(null);
   const { data, loading, error, load } = useSheets();
@@ -119,29 +103,22 @@ export default function App() {
         </div>
 
         <nav style={{ padding: "12px", flex: 1, overflowY: "auto" }}>
-          {NAV_SECTIONS.map((section) => (
-            <div key={section.label} style={{ marginBottom: 4 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", padding: "8px 12px 4px" }}>
-                {section.label}
-              </p>
-              {section.items.map((item) => {
-                const active = view === item.key;
-                return (
-                  <div key={item.key} onClick={() => setView(item.key)} style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    padding: "8px 12px", borderRadius: 8,
-                    fontSize: 13.5, fontWeight: 500,
-                    color: active ? "#2563eb" : "#6b7280",
-                    background: active ? "#eff6ff" : "transparent",
-                    marginBottom: 1, cursor: "pointer",
-                    transition: "all 0.15s",
-                  }}>
-                    {item.label}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+          {NAV_SECTIONS.map((item) => {
+            const active = view === item.key;
+            return (
+              <div key={item.key} onClick={() => setView(item.key)} style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "9px 12px", borderRadius: 8,
+                fontSize: 13.5, fontWeight: 500,
+                color: active ? "#2563eb" : "#6b7280",
+                background: active ? "#eff6ff" : "transparent",
+                marginBottom: 2, cursor: "pointer",
+                transition: "all 0.15s",
+              }}>
+                {item.label}
+              </div>
+            );
+          })}
 
           {/* Shooters separator + item */}
           <div style={{ borderTop: "1px solid #f3f4f6", marginTop: 8, paddingTop: 8 }}>
@@ -219,19 +196,21 @@ export default function App() {
 
         {data && !loading && (
           <>
-            {/* ── GOOGLE ADS · OVERVIEW ── */}
+            {/* ── GOOGLE ADS ── */}
             {view === "google-overview" && (() => {
-              const rows      = excludeShooters(filterByDate(data.googleAds, start, end));
-              const kpis      = computeKpis(rows);
-              const byDate    = aggregateByDate(rows);
-              const campaigns = aggregateByCampaign(rows);
-              const countries = aggregateByCountry(rows);
+              const allRows   = excludeShooters(filterByDate(data.googleAds, start, end));
+              const filtered  = filterByVenue(allRows, venue);
+              const kpis      = computeKpis(filtered);
+              const byDate    = aggregateByDate(filtered);
+              const campaigns = aggregateByCampaign(filtered);
+              const countries = aggregateByCountry(filtered);
               return (
                 <>
+                  <VenueFilter value={venue} onChange={handleVenueChange} />
                   <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-                    <KpiCard label="Total Spend"  value={money(kpis.spend)}       sub={`${rows.length.toLocaleString()} campaign days`} />
+                    <KpiCard label="Total Spend"  value={money(kpis.spend)} sub={venue} />
                     <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
-                    <KpiCard label="Conv. Value"  value={money(kpis.convValue)}   sub="revenue attributed" />
+                    <KpiCard label="Conv. Value"  value={money(kpis.convValue)} sub="revenue attributed" />
                     <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} sub={`€${kpis.cpc.toFixed(2)} CPC`} />
                     <KpiCard label="Clicks"       value={kpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(kpis.ctr * 100).toFixed(2)}% CTR`} />
                     <KpiCard label="Impressions"  value={kpis.impressions.toLocaleString(undefined, { maximumFractionDigits: 0 })} />
@@ -248,44 +227,19 @@ export default function App() {
               );
             })()}
 
-            {/* ── GOOGLE ADS · VENUES ── */}
-            {view === "google-venues" && (() => {
-              const allRows   = excludeShooters(filterByDate(data.googleAds, start, end));
-              const filtered  = filterByVenue(allRows, venue);
+            {/* ── META ADS ── */}
+            {view === "meta-overview" && (() => {
+              const allRows   = excludeShooters(filterByDate((data.metaAds ?? []).map(normaliseMetaRow), start, end));
+              const filtered  = filterByVenue(allRows, metaVenue);
               const kpis      = computeKpis(filtered);
               const byDate    = aggregateByDate(filtered);
               const campaigns = aggregateByCampaign(filtered);
               const countries = aggregateByCountry(filtered);
               return (
                 <>
-                  <VenueFilter value={venue} onChange={handleVenueChange} />
+                  <VenueFilter value={metaVenue} onChange={setMetaVenue} />
                   <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-                    <KpiCard label="Total Spend"  value={money(kpis.spend)} sub={venue} />
-                    <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />
-                    <KpiCard label="Conv. Value"  value={money(kpis.convValue)} />
-                    <KpiCard label="ROAS"         value={kpis.roas.toFixed(2) + "x"} sub={`€${kpis.cpc.toFixed(2)} CPC`} />
-                    <KpiCard label="Clicks"       value={kpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(kpis.ctr * 100).toFixed(2)}% CTR`} />
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-                    <SpendChart data={byDate} />
-                    <CountryBreakdown countries={countries} />
-                  </div>
-                  <CampaignTable campaigns={campaigns} />
-                </>
-              );
-            })()}
-
-            {/* ── META ADS · OVERVIEW ── */}
-            {view === "meta-overview" && (() => {
-              const rows      = excludeShooters(filterByDate((data.metaAds ?? []).map(normaliseMetaRow), start, end));
-              const kpis      = computeKpis(rows);
-              const byDate    = aggregateByDate(rows);
-              const campaigns = aggregateByCampaign(rows);
-              const countries = aggregateByCountry(rows);
-              return (
-                <>
-                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
-                    <KpiCard label="Total Spend"  value={money(kpis.spend)}       sub={`${rows.length.toLocaleString()} campaign days`} />
+                    <KpiCard label="Total Spend"  value={money(kpis.spend)} sub={metaVenue} />
                     <KpiCard label="Actions"      value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={kpis.conversions > 0 ? `€${kpis.cpa.toFixed(2)} per action` : undefined} />
                     <KpiCard label="Clicks"       value={kpis.clicks.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`${(kpis.ctr * 100).toFixed(2)}% CTR`} />
                     <KpiCard label="CPC"          value={`€${kpis.cpc.toFixed(2)}`} />
@@ -296,7 +250,7 @@ export default function App() {
                     <CountryBreakdown countries={countries} />
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                    <TopCampaignsChart campaigns={campaigns} metric="spend" label="Spend" />
+                    <TopCampaignsChart campaigns={campaigns} metric="spend"  label="Spend" />
                     <TopCampaignsChart campaigns={campaigns} metric="clicks" label="Clicks" />
                   </div>
                 </>
