@@ -57,7 +57,7 @@ export default function App() {
 
   const handleToken = useCallback(() => {
     setAuthed(true);
-    setTimeout(() => setUserEmail(getUserEmail()), 500);
+    setUserEmail(getUserEmail());
     load();
   }, [load]);
   useEffect(() => { if (gsiReady) initTokenClient(handleToken); }, [gsiReady, handleToken]);
@@ -71,7 +71,7 @@ export default function App() {
   };
 
   const { start, end } = data ? getDateRange(preset, data.googleAds, customRange) : {};
-  const byDate_all = data ? filterByDate(data.googleAds, start, end) : [];
+  const byDate_all = data ? excludeShooters(filterByDate(data.googleAds, start, end)) : [];
   const filtered   = filterByVenue(byDate_all, venue);
   const kpis       = computeKpis(filtered);
   const byDate     = aggregateByDate(filtered);
@@ -227,7 +227,7 @@ export default function App() {
             {/* ── VENUES ── */}
             {view === "venues" && (
               <>
-                <VenueFilter value={venue} onChange={handleVenueChange} canSeeShooters={canSeeShooters} />
+                <VenueFilter value={venue} onChange={handleVenueChange} />
                 <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
                   <KpiCard label="Total Spend"  value={money(kpis.spend)} sub={venue} />
                   <KpiCard label="Conversions"  value={kpis.conversions.toLocaleString(undefined, { maximumFractionDigits: 0 })} sub={`€${kpis.cpa.toFixed(2)} CPA`} />

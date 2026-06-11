@@ -1,41 +1,37 @@
 export const CLIENT_ID      = (import.meta.env.VITE_GOOGLE_CLIENT_ID  ?? "").trim();
 export const SPREADSHEET_ID = (import.meta.env.VITE_SPREADSHEET_ID ?? "").trim().replace(/\/+$/, "");
 
-const SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly";
+const SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly openid email";
 
 let _tokenClient = null;
 let _accessToken = null;
-
-let _email = null;
-
-/** Decode the email from a Google ID token JWT (no extra scope needed). */
-function decodeEmail(credential) {
-  try {
-    const payload = JSON.parse(atob(credential.split(".")[1]));
-    return payload.email?.toLowerCase() ?? null;
-  } catch {
-    return null;
-  }
-}
+let _email       = null;
 
 export function initTokenClient(onTokenReceived) {
-  // Token client for Sheets API access
   _tokenClient = window.google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
-    callback: (resp) => {
+    callback: async (resp) => {
       if (resp.error) throw new Error(resp.error);
       _accessToken = resp.access_token;
-      onTokenReceived(resp.access_token);
+      // Fetch email directly from userinfo — always reliable
+      try {
+        const r = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${_accessToken}` },
+        });
+        const { email } = await r.json();
+        _email = email?.toLowerCase() ?? null;
+      } catch {
+        _email = null;
+      }
+      onTokenReceived(_accessToken);
     },
   });
 
-  // ID token flow — gets email and, if One Tap auto-selects, triggers silent token request
+  // One Tap for silent re-auth on return visits
   window.google.accounts.id.initialize({
     client_id: CLIENT_ID,
     callback: (credResp) => {
-      _email = decodeEmail(credResp.credential);
-      // Auto-selected = user already has active session → silently get Sheets token
       if (credResp.select_by === "auto" || credResp.select_by === "user_1tap") {
         _tokenClient.requestAccessToken({ prompt: "" });
       }

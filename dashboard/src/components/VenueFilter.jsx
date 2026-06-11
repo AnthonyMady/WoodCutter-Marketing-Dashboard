@@ -12,8 +12,8 @@ const FLAG = {
   "All venues":        "🌍",
 };
 
-export default function VenueFilter({ value, onChange, canSeeShooters = false }) {
-  const visible = VENUES.filter((v) => v !== "Shooters Brussels" || canSeeShooters);
+export default function VenueFilter({ value, onChange }) {
+  const visible = VENUES.filter((v) => v !== "Shooters Brussels");
 
   return (
     <div style={{ marginBottom: 24 }}>
